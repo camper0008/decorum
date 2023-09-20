@@ -1,2 +1,3 @@
-pub mod db_trait;
+pub mod database;
 pub mod models;
+pub mod sqlite;

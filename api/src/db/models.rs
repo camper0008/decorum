@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub struct Id(String);
 pub struct Link(String);
 
