@@ -1,5 +1,6 @@
+mod api;
 mod db;
-mod routes;
+mod permission_utils;
 
 use std::sync::Arc;
 
@@ -21,10 +22,10 @@ async fn main() {
     let database = Arc::new(RwLock::new(SqliteDb {}));
 
     let router = Router::new();
-    let router = router.push(Router::with_path("/health").get(routes::health::route));
+    let router = router.push(Router::with_path("/health").get(api::health::route));
     let router = router
         .hoop(affix::inject::<DatabaseParam>(database))
-        .push(Router::with_path("/posts/create_post").post(routes::posts::create_post_route));
+        .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route));
 
     let router = openapi_route(router);
 

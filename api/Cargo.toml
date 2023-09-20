@@ -6,9 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-salvo = { version = "0.55.4", features = ["oapi", "affix"] }
+derive_more = { version = "0.99.17", features = ["display"], default-features = false }
+eyre = "0.6.8"
+salvo = { version = "0.55.4", features = ["oapi", "affix", "session", "eyre"] }
 serde = { version = "1.0.188", features = ["derive"] }
-snafu = "0.7.5"
 tokio = { version = "1.32.0", features = ["macros"] }
 tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
