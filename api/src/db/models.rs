@@ -41,7 +41,8 @@ pub struct User {
 pub struct Category {
     id: Id,
     pub name: Name,
-    pub minimum_permission: Permission,
+    pub minimum_write_permission: Permission,
+    pub minimum_read_permission: Permission,
 }
 
 #[derive(Deserialize)]

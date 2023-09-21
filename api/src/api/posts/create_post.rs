@@ -38,10 +38,10 @@ async fn verify_valid_user_and_category<Db: Database + Sync + Send + ?Sized>(
         .map_err(|_| StatusError::internal_server_error().brief("internal server error"))?
         .ok_or_else(|| StatusError::bad_request().brief("invalid category id"))?;
 
-    if !permission_utils::is_allowed(&user.permission, &category.minimum_permission) {
+    if !permission_utils::is_allowed(&user.permission, &category.minimum_write_permission) {
         return Err(StatusError::unauthorized().brief(format!(
             "you must be {} or above to create posts in category {}, you are {}",
-            category.minimum_permission, category.name.0, user.permission
+            category.minimum_write_permission, category.name.0, user.permission
         )));
     }
 
