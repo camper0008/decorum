@@ -622,7 +622,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "decorum"
+name = "decorum-api"
 version = "0.1.0"
 dependencies = [
  "bcrypt",
@@ -632,6 +632,7 @@ dependencies = [
  "log",
  "salvo",
  "serde",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",
