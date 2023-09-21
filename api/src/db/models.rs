@@ -4,7 +4,11 @@ use derive_more::Display;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Id(String);
+pub struct Id(pub String);
+#[derive(Deserialize)]
+pub struct Name(pub String);
+#[derive(Deserialize)]
+pub struct Password(pub String);
 
 impl From<String> for Id {
     fn from(value: String) -> Self {
@@ -25,18 +29,18 @@ pub enum Permission {
 
 #[derive(Deserialize)]
 pub struct User {
-    id: Id,
-    username: String,
-    nickname: String,
-    password: String,
+    pub id: Id,
+    username: Name,
+    nickname: Name,
+    pub password: Password,
     pub permission: Permission,
-    avatar: Option<Attachment>,
+    avatar: Option<Id>,
 }
 
 #[derive(Deserialize)]
 pub struct Category {
     id: Id,
-    pub name: String,
+    pub name: Name,
     pub minimum_permission: Permission,
 }
 
@@ -44,7 +48,7 @@ pub struct Category {
 pub struct Post {
     id: Id,
     category: Id,
-    title: String,
+    title: Name,
     content: String,
     creator_id: Id,
 }

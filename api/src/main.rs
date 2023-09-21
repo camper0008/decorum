@@ -24,20 +24,26 @@ fn openapi_route(router: Router) -> Router {
 async fn main() -> eyre::Result<()> {
     tracing_subscriber::fmt().init();
 
-    let secret = std::env::var("SESSION_HANDLER_TOKEN")
+    let session_handler_token = std::env::var("SESSION_HANDLER_TOKEN")
         .with_context(|| "env variable `SESSION_HANDLER_TOKEN` should be set")?;
 
-    let session_handler = SessionHandler::builder(CookieStore::new(), secret.as_bytes())
-        .build()
-        .unwrap();
+    let session_handler =
+        SessionHandler::builder(CookieStore::new(), session_handler_token.as_bytes())
+            .build()
+            .unwrap();
 
-    let database = Arc::new(RwLock::new(SqliteDb {}));
+    let database_url = std::env::var("DATABASE_URL")
+        .with_context(|| "env variable `DATABASE_URL` should be set")?;
+
+    let database = SqliteDb::new(database_url).await?;
+    let database = Arc::new(RwLock::new(database));
 
     let router = Router::new();
     let router = router.push(Router::with_path("/health").get(api::health::route));
     let router = router
         .hoop(session_handler)
         .hoop(affix::inject::<DatabaseParam>(database))
+        .push(Router::with_path("/users/create_user").post(api::users::register_route))
         .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route));
 
     let router = openapi_route(router);
