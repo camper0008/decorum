@@ -43,7 +43,6 @@ async fn main() -> eyre::Result<()> {
     let database = Arc::new(RwLock::new(database));
 
     let router = Router::new();
-    let router = router.push(Router::with_path("/health").get(api::health::route));
     let router = router
         .hoop(session_handler)
         .hoop(affix::inject::<DatabaseParam>(database))
