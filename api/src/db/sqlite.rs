@@ -4,7 +4,7 @@ use eyre::Context;
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-use crate::date_utils::utc_date_iso_string;
+use crate::iso_date_strings::utc_date_iso_string;
 
 use super::{
     database::{CreatePost, CreateUser, Database, DatabaseError},

@@ -12,7 +12,7 @@ use crate::db::{
     database::{CreatePost, Database, DatabaseParam},
     models::Id,
 };
-use crate::permission_utils;
+use crate::permission_verification;
 
 #[derive(Deserialize, Extractible, ToSchema)]
 struct RouteRequest {
@@ -38,7 +38,7 @@ async fn verify_valid_user_and_category<'a, Db: Database + Sync + Send + ?Sized>
         .map_err(|_| MessageResponse::internal_server_error("internal server error"))?
         .ok_or_else(|| MessageResponse::bad_request("invalid category id"))?;
 
-    if !permission_utils::is_allowed(&user.permission, &category.minimum_write_permission) {
+    if !permission_verification::is_allowed(&user.permission, &category.minimum_write_permission) {
         let err = format!(
             "you must be {} or above to create posts in category {}, you are {}",
             category.minimum_write_permission, category.name.0, user.permission
