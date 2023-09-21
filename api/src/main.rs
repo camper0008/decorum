@@ -19,6 +19,20 @@ fn openapi_route(router: Router) -> Router {
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("/swagger-ui"))
 }
 
+fn create_routes() -> Router {
+    let limiter = RateLimiter::new(
+        FixedGuard::new(),
+        MokaStore::new(),
+        RemoteIpIssuer,
+        BasicQuota::per_minute(30),
+    );
+    Router::with_hoop(limiter)
+        .push(Router::with_path("/users/register").post(api::users::register_route))
+        .push(Router::with_path("/users/login").post(api::users::login_route))
+        .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
+        .push(Router::with_path("/posts/create_category").post(api::posts::create_category_route))
+}
+
 // TODO: everything else api
 
 #[tokio::main]
@@ -43,26 +57,13 @@ async fn main() -> eyre::Result<()> {
     let database = SqliteDb::new(database_url).await?;
     let database = Arc::new(RwLock::new(database));
 
-    let create_limiter = RateLimiter::new(
-        FixedGuard::new(),
-        MokaStore::new(),
-        RemoteIpIssuer,
-        BasicQuota::per_minute(30),
-    );
-
     let router = Router::new();
 
     let router = router.push(
         Router::new()
             .hoop(session_handler)
             .hoop(affix::inject::<DatabaseParam>(database))
-            .hoop(create_limiter)
-            .push(Router::with_path("/users/register").post(api::users::register_route))
-            .push(Router::with_path("/users/login").post(api::users::login_route))
-            .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
-            .push(
-                Router::with_path("/posts/create_category").post(api::posts::create_category_route),
-            ),
+            .push(create_routes()),
     );
 
     let router = openapi_route(router);
