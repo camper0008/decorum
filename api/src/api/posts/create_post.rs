@@ -41,7 +41,7 @@ async fn verify_valid_user_and_category<'a, Db: Database + Sync + Send + ?Sized>
     if !permission_verification::is_allowed(&user.permission, &category.minimum_write_permission) {
         let err = format!(
             "you must be {} or above to create posts in category {}, you are {}",
-            category.minimum_write_permission, category.name.0, user.permission
+            category.minimum_write_permission, category.title.0, user.permission
         );
         return Err(MessageResponse::unauthorized(err));
     }

@@ -24,12 +24,19 @@ pub struct CreatePost {
     pub creator_id: Id,
 }
 
+pub struct CreateCategory {
+    pub title: String,
+    pub minimum_write_permission: Permission,
+    pub minimum_read_permission: Permission,
+}
+
 #[async_trait]
 pub trait Database {
     async fn create_user(&mut self, data: CreateUser) -> Result<User, DatabaseError>;
     async fn delete_user_with_id(&mut self, id: &Id) -> Result<Option<User>, DatabaseError>;
-    async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError>;
     async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError>;
     async fn user_from_username(&self, username: &String) -> Result<Option<User>, DatabaseError>;
+    async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError>;
+    async fn create_category(&mut self, data: CreateCategory) -> Result<Category, DatabaseError>;
     async fn category_from_id(&self, id: &Id) -> Result<Option<Category>, DatabaseError>;
 }

@@ -13,7 +13,7 @@ CREATE TABLE user (
 DROP TABLE IF EXISTS category;
 CREATE TABLE category (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
+    title TEXT NOT NULL,
     minimum_write_permission TEXT NOT NULL,
     minimum_read_permission TEXT NOT NULL,
     date_created TEXT NOT NULL
@@ -36,7 +36,7 @@ CREATE TABLE reply (
     creator_id VARCHAR(36) NOT NULL,
     post_id VARCHAR(36) NOT NULL,
     date_created TEXT NOT NULL,
-   FOREIGN KEY(post_id) REFERENCES post(id),
+    FOREIGN KEY(post_id) REFERENCES post(id),
     FOREIGN KEY(creator_id) REFERENCES user(id)
 );
 

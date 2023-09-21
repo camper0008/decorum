@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use derive_more::Display;
+use salvo::prelude::ToSchema;
 use serde::Deserialize;
 
 macro_rules! impl_from_for_newtype {
@@ -31,7 +32,7 @@ impl_from_for_newtype!(Name);
 impl_from_for_newtype!(Password);
 impl_from_for_newtype!(Link);
 
-#[derive(Deserialize, sqlx::Type, Display)]
+#[derive(Deserialize, sqlx::Type, Display, ToSchema)]
 pub enum Permission {
     Unverified,
     User,
@@ -65,7 +66,7 @@ pub struct User {
 #[derive(Deserialize)]
 pub struct Category {
     pub id: Id,
-    pub name: Name,
+    pub title: Name,
     pub minimum_write_permission: Permission,
     pub minimum_read_permission: Permission,
     pub date_created: String,

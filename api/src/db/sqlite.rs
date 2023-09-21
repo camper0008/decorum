@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::iso_date_strings::utc_date_iso_string;
 
 use super::{
-    database::{CreatePost, CreateUser, Database, DatabaseError},
+    database::{CreateCategory, CreatePost, CreateUser, Database, DatabaseError},
     models::{Category, Id, Name, Password, Permission, Post, User},
 };
 
@@ -63,6 +63,36 @@ impl Database for SqliteDb {
             .with_context(|| format!("unable to delete user with id='{id}'"))?;
         Ok(user)
     }
+    async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError> {
+        let user = sqlx::query!("SELECT * FROM user WHERE id=?;", id)
+            .fetch_optional(&self.pool)
+            .await
+            .with_context(|| format!("unable to get user with id='{id}'"))?;
+        Ok(user.map(|user| User {
+            id: Id(user.id),
+            username: Name(user.username),
+            nickname: Name(user.nickname),
+            password: Password(user.password),
+            permission: user.permission.into(),
+            date_created: user.date_created,
+            avatar_id: user.avatar_id.map(Id),
+        }))
+    }
+    async fn user_from_username(&self, username: &String) -> Result<Option<User>, DatabaseError> {
+        let user = sqlx::query!("SELECT * FROM user WHERE username=?;", username)
+            .fetch_optional(&self.pool)
+            .await
+            .with_context(|| format!("unable to get user with username='{username}'"))?;
+        Ok(user.map(|user| User {
+            id: Id(user.id),
+            username: Name(user.username),
+            nickname: Name(user.nickname),
+            password: Password(user.password),
+            permission: user.permission.into(),
+            date_created: user.date_created,
+            avatar_id: user.avatar_id.map(Id),
+        }))
+    }
     async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError> {
         let id = Uuid::new_v4().to_string();
         let date_created = utc_date_iso_string();
@@ -89,40 +119,34 @@ impl Database for SqliteDb {
             date_created,
         })
     }
-    async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError> {
-        let user = sqlx::query!("SELECT * FROM user WHERE id=?;", id)
-            .fetch_optional(&self.pool)
-            .await
-            .with_context(|| format!("unable to get user with id='{id}'"))?;
-        Ok(user.map(|user| User {
-            id: Id(user.id),
-            username: Name(user.username),
-            nickname: Name(user.nickname),
-            password: Password(user.password),
-            permission: user.permission.into(),
-            date_created: user.date_created,
-            avatar_id: user.avatar_id.map(Id),
-        }))
+    async fn create_category(&mut self, data: CreateCategory) -> Result<Category, DatabaseError> {
+        let id = Uuid::new_v4().to_string();
+        let date_created = utc_date_iso_string();
+
+        sqlx::query!(
+            "INSERT INTO category (id, title, minimum_write_permission, minimum_read_permission, date_created) VALUES (?, ?, ?, ?, ?);",
+            id,
+            data.title,
+            data.minimum_write_permission,
+            data.minimum_read_permission,
+            date_created,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to insert post")?;
+
+        Ok(Category {
+            id: Id(id),
+            title: Name(data.title),
+            minimum_read_permission: data.minimum_read_permission,
+            minimum_write_permission: data.minimum_write_permission,
+            date_created,
+        })
     }
     async fn category_from_id(&self, id: &Id) -> Result<Option<Category>, DatabaseError> {
         sqlx::query_as!(Category, "SELECT * FROM category WHERE id=?;", id)
             .fetch_optional(&self.pool)
             .await
             .with_context(|| format!("unable to get user with id='{id}'"))
-    }
-    async fn user_from_username(&self, username: &String) -> Result<Option<User>, DatabaseError> {
-        let user = sqlx::query!("SELECT * FROM user WHERE username=?;", username)
-            .fetch_optional(&self.pool)
-            .await
-            .with_context(|| format!("unable to get user with username='{username}'"))?;
-        Ok(user.map(|user| User {
-            id: Id(user.id),
-            username: Name(user.username),
-            nickname: Name(user.nickname),
-            password: Password(user.password),
-            permission: user.permission.into(),
-            date_created: user.date_created,
-            avatar_id: user.avatar_id.map(Id),
-        }))
     }
 }

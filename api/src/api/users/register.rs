@@ -43,11 +43,9 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
             return Err(MessageResponse::bad_request("user already exists"));
         }
     }
-    log::info!("b={password}");
     let password = bcrypt::hash(password, bcrypt::DEFAULT_COST)
         .map_err(|err| log::error!("unable to hash pw: {err:?}"))
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
-    log::info!("a={password}");
     {
         let mut db = db.write().await;
         let nickname = username.clone();
