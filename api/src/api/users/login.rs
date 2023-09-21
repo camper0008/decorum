@@ -41,7 +41,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
             user.ok_or_else(|| MessageResponse::bad_request("invalid username or password"))?;
         user
     };
-    let is_valid = bcrypt::verify(&password, &user.password.0)
+    let is_valid = bcrypt::verify(&password, &user.password.to_string())
         .map_err(|err| log::error!("unable to verify with bcrypt: {err:?}"))
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
 
@@ -51,7 +51,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     let mut session = Session::new();
     session
-        .insert("user_id", &user.id.0)
+        .insert("user_id", &user.id.to_string())
         .map_err(|err| {
             log::error!(
                 "unable to insert user session for user {}: {err:?}",

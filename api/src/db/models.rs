@@ -16,18 +16,22 @@ macro_rules! impl_from_for_newtype {
 
 #[derive(Deserialize, sqlx::Type, Display)]
 #[sqlx(transparent)]
-pub struct Id(pub String);
+pub struct Id(String);
 #[derive(Deserialize, sqlx::Type, Display)]
 #[sqlx(transparent)]
-pub struct Name(pub String);
+pub struct Content(String);
 #[derive(Deserialize, sqlx::Type, Display)]
 #[sqlx(transparent)]
-pub struct Password(pub String);
-#[derive(Deserialize, sqlx::Type)]
+pub struct Name(String);
+#[derive(Deserialize, sqlx::Type, Display)]
+#[sqlx(transparent)]
+pub struct Password(String);
+#[derive(Deserialize, sqlx::Type, Display)]
 #[sqlx(transparent)]
 pub struct Link(String);
 
 impl_from_for_newtype!(Id);
+impl_from_for_newtype!(Content);
 impl_from_for_newtype!(Name);
 impl_from_for_newtype!(Password);
 impl_from_for_newtype!(Link);
@@ -77,18 +81,18 @@ pub struct Post {
     pub id: Id,
     pub category_id: Id,
     pub title: Name,
-    pub content: String,
+    pub content: Content,
     pub creator_id: Id,
     pub date_created: String,
 }
 
 #[derive(Deserialize)]
 pub struct Reply {
-    id: Id,
-    creator_id: Id,
-    post_id: Id,
-    content: String,
-    date_created: String,
+    pub id: Id,
+    pub creator_id: Id,
+    pub post_id: Id,
+    pub content: Content,
+    pub date_created: String,
 }
 
 #[derive(Deserialize)]

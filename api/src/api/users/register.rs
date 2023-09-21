@@ -50,9 +50,9 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
         let mut db = db.write().await;
         let nickname = username.clone();
         db.create_user(CreateUser {
-            username,
-            nickname,
-            password,
+            username: username.into(),
+            nickname: nickname.into(),
+            password: password.into(),
             permission: Permission::Unverified,
             avatar_id: None,
         })

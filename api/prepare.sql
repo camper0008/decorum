@@ -34,6 +34,7 @@ DROP TABLE IF EXISTS reply;
 CREATE TABLE reply (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     creator_id VARCHAR(36) NOT NULL,
+    content TEXT NOT NULL,
     post_id VARCHAR(36) NOT NULL,
     date_created TEXT NOT NULL,
     FOREIGN KEY(post_id) REFERENCES post(id),

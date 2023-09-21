@@ -29,7 +29,7 @@ struct RouteRequest {
     minimum_permissions: MinimumPermissionRequest,
 }
 
-async fn verify_valid_user_permissions<'a, Db: Database + Sync + Send + ?Sized>(
+async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     db: &RwLockReadGuard<'_, Db>,
     user_id: &Id,
     minimum_read_permission: &Permission,
@@ -97,12 +97,12 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     {
         let db = db.read().await;
-        verify_valid_user_permissions(&db, &user_id, &read_permission, &write_permission).await?;
+        verify_valid_user_permission(&db, &user_id, &read_permission, &write_permission).await?;
     }
     {
         let mut db = db.write().await;
         db.create_category(CreateCategory {
-            title,
+            title: title.into(),
             minimum_read_permission: read_permission,
             minimum_write_permission: write_permission,
         })

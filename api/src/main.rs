@@ -7,7 +7,6 @@ use std::sync::Arc;
 
 use db::{database::DatabaseParam, sqlite::SqliteDb};
 use eyre::Context;
-use salvo::http::cookie::time::Duration;
 use salvo::rate_limiter::{BasicQuota, FixedGuard, MokaStore, RateLimiter, RemoteIpIssuer};
 use salvo::{prelude::*, session::CookieStore};
 use tokio::sync::RwLock;
@@ -31,9 +30,14 @@ fn create_routes() -> Router {
         .push(Router::with_path("/users/login").post(api::users::login_route))
         .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
         .push(Router::with_path("/posts/create_category").post(api::posts::create_category_route))
+        .push(Router::with_path("/posts/create_reply").post(api::posts::create_reply_route))
 }
 
-// TODO: everything else api
+// TODO: read <X> api
+// TODO: ban user api + 'wipe' option
+// TODO: unban user api?
+// TODO: delete (...) api
+// TODO: make invalid states unrepresentable (impl T::TryInto)
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

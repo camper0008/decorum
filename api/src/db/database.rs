@@ -3,31 +3,36 @@ use std::sync::Arc;
 use salvo::async_trait;
 use tokio::sync::RwLock;
 
-use super::models::{Category, Id, Permission, Post, User};
+use super::models::{Category, Content, Id, Name, Password, Permission, Post, Reply, User};
 
 pub type DatabaseError = eyre::Report;
 
 pub type DatabaseParam = Arc<RwLock<dyn Database + Send + Sync>>;
 
 pub struct CreateUser {
-    pub username: String,
-    pub nickname: String,
-    pub password: String,
+    pub username: Name,
+    pub nickname: Name,
+    pub password: Password,
     pub permission: Permission,
     pub avatar_id: Option<Id>,
 }
 
 pub struct CreatePost {
     pub category_id: Id,
-    pub title: String,
+    pub title: Name,
     pub content: String,
     pub creator_id: Id,
 }
 
 pub struct CreateCategory {
-    pub title: String,
+    pub title: Name,
     pub minimum_write_permission: Permission,
     pub minimum_read_permission: Permission,
+}
+pub struct CreateReply {
+    pub creator_id: Id,
+    pub post_id: Id,
+    pub content: Content,
 }
 
 #[async_trait]
@@ -37,6 +42,7 @@ pub trait Database {
     async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError>;
     async fn user_from_username(&self, username: &String) -> Result<Option<User>, DatabaseError>;
     async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError>;
+    async fn create_reply(&mut self, data: CreateReply) -> Result<Reply, DatabaseError>;
     async fn create_category(&mut self, data: CreateCategory) -> Result<Category, DatabaseError>;
     async fn category_from_id(&self, id: &Id) -> Result<Option<Category>, DatabaseError>;
 }

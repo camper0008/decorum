@@ -7,8 +7,8 @@ use uuid::Uuid;
 use crate::iso_date_strings::utc_date_iso_string;
 
 use super::{
-    database::{CreateCategory, CreatePost, CreateUser, Database, DatabaseError},
-    models::{Category, Id, Name, Password, Permission, Post, User},
+    database::{CreateCategory, CreatePost, CreateReply, CreateUser, Database, DatabaseError},
+    models::{Category, Id, Permission, Post, Reply, User},
 };
 
 pub struct SqliteDb {
@@ -46,10 +46,10 @@ impl Database for SqliteDb {
         .with_context(|| "unable to insert user")?;
 
         Ok(User {
-            id: Id(id),
-            username: Name(data.username),
-            nickname: Name(data.nickname),
-            password: Password(data.password),
+            id: id.into(),
+            username: data.username.into(),
+            nickname: data.nickname.into(),
+            password: data.password.into(),
             permission: Permission::Unverified,
             avatar_id: data.avatar_id,
             date_created,
@@ -69,13 +69,13 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get user with id='{id}'"))?;
         Ok(user.map(|user| User {
-            id: Id(user.id),
-            username: Name(user.username),
-            nickname: Name(user.nickname),
-            password: Password(user.password),
+            id: user.id.into(),
+            username: user.username.into(),
+            nickname: user.nickname.into(),
+            password: user.password.into(),
             permission: user.permission.into(),
             date_created: user.date_created,
-            avatar_id: user.avatar_id.map(Id),
+            avatar_id: user.avatar_id.map(|id| id.into()),
         }))
     }
     async fn user_from_username(&self, username: &String) -> Result<Option<User>, DatabaseError> {
@@ -84,13 +84,13 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get user with username='{username}'"))?;
         Ok(user.map(|user| User {
-            id: Id(user.id),
-            username: Name(user.username),
-            nickname: Name(user.nickname),
-            password: Password(user.password),
+            id: user.id.into(),
+            username: user.username.into(),
+            nickname: user.nickname.into(),
+            password: user.password.into(),
             permission: user.permission.into(),
             date_created: user.date_created,
-            avatar_id: user.avatar_id.map(Id),
+            avatar_id: user.avatar_id.map(|id| id.into()),
         }))
     }
     async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError> {
@@ -111,14 +111,40 @@ impl Database for SqliteDb {
         .with_context(|| "unable to insert post")?;
 
         Ok(Post {
-            id: Id(id),
-            title: Name(data.title),
-            content: data.content,
+            id: id.into(),
+            title: data.title.into(),
+            content: data.content.into(),
             category_id: data.category_id,
             creator_id: data.creator_id,
             date_created,
         })
     }
+
+    async fn create_reply(&mut self, data: CreateReply) -> Result<Reply, DatabaseError> {
+        let id = Uuid::new_v4().to_string();
+        let date_created = utc_date_iso_string();
+
+        sqlx::query!(
+            "INSERT INTO reply (id, content, creator_id, post_id, date_created) VALUES (?, ?, ?, ?, ?);",
+            id,
+            data.content,
+            data.creator_id,
+            data.post_id,
+            date_created,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to insert reply")?;
+
+        Ok(Reply {
+            id: id.into(),
+            content: data.content.into(),
+            creator_id: data.creator_id.into(),
+            post_id: data.post_id.into(),
+            date_created,
+        })
+    }
+
     async fn create_category(&mut self, data: CreateCategory) -> Result<Category, DatabaseError> {
         let id = Uuid::new_v4().to_string();
         let date_created = utc_date_iso_string();
@@ -133,11 +159,11 @@ impl Database for SqliteDb {
         )
         .execute(&self.pool)
         .await
-        .with_context(|| "unable to insert post")?;
+        .with_context(|| "unable to insert category")?;
 
         Ok(Category {
-            id: Id(id),
-            title: Name(data.title),
+            id: id.into(),
+            title: data.title.into(),
             minimum_read_permission: data.minimum_read_permission,
             minimum_write_permission: data.minimum_write_permission,
             date_created,

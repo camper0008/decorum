@@ -7,17 +7,19 @@ use salvo::{
 use serde::Deserialize;
 use tokio::sync::RwLockReadGuard;
 
-use crate::api::response::{MessageResponse, ResponseResult};
 use crate::db::{
-    database::{CreatePost, Database, DatabaseParam},
+    database::{Database, DatabaseParam},
     models::Id,
 };
 use crate::permission_verification;
+use crate::{
+    api::response::{MessageResponse, ResponseResult},
+    db::database::CreateReply,
+};
 
 #[derive(Deserialize, Extractible, ToSchema)]
 struct RouteRequest {
-    category_id: String,
-    title: String,
+    post_id: String,
     content: String,
 }
 
@@ -40,7 +42,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
 
     if !permission_verification::is_allowed(&user.permission, &category.minimum_write_permission) {
         let err = format!(
-            "you must be {} or above to create posts in category {}, you are {}",
+            "you must be {} or above to create replies in category {}, you are {}",
             category.minimum_write_permission,
             category.title.to_string(),
             user.permission
@@ -53,18 +55,12 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
 
 #[salvo::endpoint(status_codes(201, 400, 403, 500))]
 pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
-    let JsonBody(RouteRequest {
-        category_id,
-        title,
-        content,
-    }) = request;
+    let JsonBody(RouteRequest { post_id, content }) = request;
 
-    let category_id = Id::from(category_id);
+    let post_id = Id::from(post_id);
 
-    if title.trim().is_empty() || content.trim().is_empty() {
-        return Err(MessageResponse::bad_request(
-            "title or content field is empty",
-        ));
+    if content.trim().is_empty() {
+        return Err(MessageResponse::bad_request("content field is empty"));
     }
 
     let user_id = depot
@@ -79,15 +75,14 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     {
         let db = db.read().await;
-        verify_valid_user_permission(&db, &user_id, &category_id).await?;
+        verify_valid_user_permission(&db, &user_id, &post_id).await?;
     }
     {
         let mut db = db.write().await;
-        db.create_post(CreatePost {
-            category_id,
-            title: title.into(),
-            content,
-            creator_id: user_id,
+        db.create_reply(CreateReply {
+            creator_id: user_id.into(),
+            content: content.into(),
+            post_id,
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))
