@@ -1,7 +1,7 @@
 use salvo::{
     http::errors::StatusResult,
     oapi::extract::JsonBody,
-    prelude::{Extractible, StatusError, ToSchema},
+    prelude::{Extractible, StatusCode, StatusError, ToSchema},
     session::SessionDepotExt,
     Depot,
 };
@@ -16,7 +16,7 @@ use crate::permission_utils;
 
 #[derive(Deserialize, Extractible, ToSchema)]
 struct RouteRequest {
-    category: String,
+    category_id: String,
     title: String,
     content: String,
 }
@@ -48,15 +48,15 @@ async fn verify_valid_user_and_category<Db: Database + Sync + Send + ?Sized>(
     Ok(())
 }
 
-#[salvo::endpoint]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> StatusResult<()> {
+#[salvo::endpoint(status_codes(201, 400, 403, 500))]
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> StatusResult<StatusCode> {
     let JsonBody(RouteRequest {
-        category,
+        category_id,
         title,
         content,
     }) = request;
 
-    let category = Id::from(category);
+    let category_id = Id::from(category_id);
 
     if title.trim().is_empty() || content.trim().is_empty() {
         return Err(StatusError::bad_request().brief("title or content field is empty"));
@@ -69,23 +69,25 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Status
         .ok_or_else(|| StatusError::unauthorized().brief("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()
-        .map_err(|_| StatusError::internal_server_error().brief("internal server error"))?;
+        .map_err(|err| log::error!("unable to get database from depot: {err:?}"))
+        .map_err(|()| StatusError::internal_server_error().brief("internal server error"))?;
 
     {
         let db = db.read().await;
-        verify_valid_user_and_category(&db, &user_id, &category).await?;
+        verify_valid_user_and_category(&db, &user_id, &category_id).await?;
     }
     {
         let mut db = db.write().await;
         db.create_post(CreatePost {
-            category,
+            category_id,
             title,
             content,
             creator_id: user_id,
         })
         .await
-        .map_err(|_| StatusError::internal_server_error().brief("error creating post"))?;
+        .map_err(|err| log::error!("unable to save post in database: {err:?}"))
+        .map_err(|()| StatusError::internal_server_error().brief("internal server error"))?;
     }
 
-    Ok(())
+    Ok(StatusCode::CREATED)
 }

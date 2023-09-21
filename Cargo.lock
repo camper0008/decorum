@@ -627,13 +627,16 @@ version = "0.1.0"
 dependencies = [
  "bcrypt",
  "derive_more",
+ "dotenv",
  "eyre",
+ "log",
  "salvo",
  "serde",
  "sqlx",
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -704,6 +707,12 @@ dependencies = [
  "redox_users",
  "winapi",
 ]
+
+[[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "dotenvy"
@@ -2431,6 +2440,7 @@ dependencies = [
  "atoi",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "crossbeam-queue",
  "dotenvy",
@@ -2455,6 +2465,8 @@ dependencies = [
  "smallvec",
  "sqlformat",
  "thiserror",
+ "tokio",
+ "tokio-stream",
  "tracing",
  "url",
 ]
@@ -2490,9 +2502,11 @@ dependencies = [
  "sha2 0.10.7",
  "sqlx-core",
  "sqlx-mysql",
+ "sqlx-postgres",
  "sqlx-sqlite",
  "syn 1.0.109",
  "tempfile",
+ "tokio",
  "url",
 ]
 
@@ -2507,6 +2521,7 @@ dependencies = [
  "bitflags 2.4.0",
  "byteorder",
  "bytes",
+ "chrono",
  "crc",
  "digest 0.10.7",
  "dotenvy",
@@ -2548,6 +2563,7 @@ dependencies = [
  "base64 0.21.4",
  "bitflags 2.4.0",
  "byteorder",
+ "chrono",
  "crc",
  "dotenvy",
  "etcetera",
@@ -2584,6 +2600,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be4c21bf34c7cae5b283efb3ac1bcc7670df7561124dc2f8bdc0b59be40f79a2"
 dependencies = [
  "atoi",
+ "chrono",
  "flume",
  "futures-channel",
  "futures-core",
@@ -3039,6 +3056,9 @@ name = "uuid"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79daa5ed5740825c40b389c5e50312b9c86df53fccd33f281df655642b43869d"
+dependencies = [
+ "getrandom 0.2.10",
+]
 
 [[package]]
 name = "valuable"

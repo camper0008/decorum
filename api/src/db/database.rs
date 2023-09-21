@@ -3,7 +3,7 @@ use std::sync::Arc;
 use salvo::async_trait;
 use tokio::sync::RwLock;
 
-use super::models::{Category, Id, Post, User};
+use super::models::{Category, Id, Permission, Post, User};
 
 pub type DatabaseError = eyre::Report;
 
@@ -13,11 +13,12 @@ pub struct CreateUser {
     pub username: String,
     pub nickname: String,
     pub password: String,
-    pub avatar: Option<Id>,
+    pub permission: Permission,
+    pub avatar_id: Option<Id>,
 }
 
 pub struct CreatePost {
-    pub category: Id,
+    pub category_id: Id,
     pub title: String,
     pub content: String,
     pub creator_id: Id,

@@ -1,12 +1,13 @@
 DROP TABLE IF EXISTS user;
 CREATE TABLE user (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
+    username TEXT NOT NULL,
     nickname TEXT NOT NULL,
     password TEXT NOT NULL,
     permission TEXT NOT NULL,
-    avatar VARCHAR(36),
+    avatar_id VARCHAR(36),
     date_created TEXT NOT NULL,
-    FOREIGN KEY(avatar) REFERENCES attachment(id)
+    FOREIGN KEY(avatar_id) REFERENCES attachment(id)
 );
 
 DROP TABLE IF EXISTS category;
@@ -23,6 +24,7 @@ CREATE TABLE post (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
+    category_id VARCHAR(36) NOT NULL,
     creator_id VARCHAR(36) NOT NULL,
     date_created TEXT NOT NULL,
     FOREIGN KEY(creator_id) REFERENCES user(id)

@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM user WHERE username=?;",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "username",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "nickname",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "password",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "permission",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "avatar_id",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "date_created",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "c973c0a7e717c2ff2ce6490654fc6e2cbba31c58dd8ff17c0e73718bda3d832e"
+}

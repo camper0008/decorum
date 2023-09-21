@@ -1,4 +1,5 @@
 mod api;
+mod date_utils;
 mod db;
 mod permission_utils;
 
@@ -18,10 +19,13 @@ fn openapi_route(router: Router) -> Router {
 
 // TODO: rate limiting
 // TODO: everything else api
-// TODO: db impl
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    if dotenv::dotenv().is_err() {
+        println!("unable to find .env file");
+    };
+
     tracing_subscriber::fmt().init();
 
     let session_handler_token = std::env::var("SESSION_HANDLER_TOKEN")
@@ -30,7 +34,7 @@ async fn main() -> eyre::Result<()> {
     let session_handler =
         SessionHandler::builder(CookieStore::new(), session_handler_token.as_bytes())
             .build()
-            .unwrap();
+            .with_context(|| "env variable `SESSION_HANDLER_TOKEN` invalid")?;
 
     let database_url = std::env::var("DATABASE_URL")
         .with_context(|| "env variable `DATABASE_URL` should be set")?;
@@ -43,7 +47,8 @@ async fn main() -> eyre::Result<()> {
     let router = router
         .hoop(session_handler)
         .hoop(affix::inject::<DatabaseParam>(database))
-        .push(Router::with_path("/users/create_user").post(api::users::register_route))
+        .push(Router::with_path("/users/register").post(api::users::register_route))
+        .push(Router::with_path("/users/login").post(api::users::login_route))
         .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route));
 
     let router = openapi_route(router);
