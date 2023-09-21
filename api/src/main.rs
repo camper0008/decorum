@@ -43,22 +43,27 @@ async fn main() -> eyre::Result<()> {
     let database = SqliteDb::new(database_url).await?;
     let database = Arc::new(RwLock::new(database));
 
-    let limiter = RateLimiter::new(
+    let create_limiter = RateLimiter::new(
         FixedGuard::new(),
         MokaStore::new(),
         RemoteIpIssuer,
-        BasicQuota::new(1, Duration::seconds_f64(15.0)),
+        BasicQuota::per_minute(30),
     );
 
     let router = Router::new();
-    let router = router
-        .hoop(session_handler)
-        .hoop(affix::inject::<DatabaseParam>(database))
-        .hoop(limiter)
-        .push(Router::with_path("/users/register").post(api::users::register_route))
-        .push(Router::with_path("/users/login").post(api::users::login_route))
-        .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
-        .push(Router::with_path("/posts/create_category").post(api::posts::create_category_route));
+
+    let router = router.push(
+        Router::new()
+            .hoop(session_handler)
+            .hoop(affix::inject::<DatabaseParam>(database))
+            .hoop(create_limiter)
+            .push(Router::with_path("/users/register").post(api::users::register_route))
+            .push(Router::with_path("/users/login").post(api::users::login_route))
+            .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
+            .push(
+                Router::with_path("/posts/create_category").post(api::posts::create_category_route),
+            ),
+    );
 
     let router = openapi_route(router);
 
