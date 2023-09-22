@@ -5,7 +5,7 @@ use tokio::sync::RwLock;
 
 use crate::password::HashedPassword;
 
-use super::models::{Category, Content, Id, Name, Permission, Post, Reply, User};
+use super::models::{Category, Content, Id, Name, Permission, Post, Reply, Title, User};
 
 pub type DatabaseError = eyre::Report;
 
@@ -21,13 +21,13 @@ pub struct CreateUser {
 
 pub struct CreatePost {
     pub category_id: Id,
-    pub title: Name,
+    pub title: Title,
     pub content: Content,
     pub creator_id: Id,
 }
 
 pub struct CreateCategory {
-    pub title: Name,
+    pub title: Title,
     pub minimum_write_permission: Permission,
     pub minimum_read_permission: Permission,
 }
@@ -44,7 +44,11 @@ pub trait Database {
     async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError>;
     async fn user_from_username(&self, username: &Name) -> Result<Option<User>, DatabaseError>;
     async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError>;
+    async fn posts_from_category(&self, id: &Id) -> Result<Vec<Post>, DatabaseError>;
+    async fn post_from_id(&self, id: &Id) -> Result<Option<Post>, DatabaseError>;
     async fn create_reply(&mut self, data: CreateReply) -> Result<Reply, DatabaseError>;
+    async fn replies_from_post(&self, id: &Id) -> Result<Vec<Reply>, DatabaseError>;
     async fn create_category(&mut self, data: CreateCategory) -> Result<Category, DatabaseError>;
     async fn category_from_id(&self, id: &Id) -> Result<Option<Category>, DatabaseError>;
+    async fn all_categories(&self) -> Result<Vec<Category>, DatabaseError>;
 }

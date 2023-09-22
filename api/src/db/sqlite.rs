@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     database::{CreateCategory, CreatePost, CreateReply, CreateUser, Database, DatabaseError},
-    models::{Category, Id, Name, Post, Reply, User},
+    models::{Category, Content, Id, Name, Post, Reply, Title, User},
 };
 
 pub struct SqliteDb {
@@ -187,7 +187,7 @@ impl Database for SqliteDb {
         let category = sqlx::query!("SELECT * FROM category WHERE id=?;", id)
             .fetch_optional(&self.pool)
             .await
-            .with_context(|| format!("unable to get user with id='{id}'"))?;
+            .with_context(|| format!("unable to get category with id='{id}'"))?;
 
         let category = match category {
             Some(category) => category,
@@ -196,10 +196,86 @@ impl Database for SqliteDb {
 
         Ok(Some(Category {
             id: Id::from_unchecked(category.id),
-            title: Name::from_unchecked(category.title),
+            title: Title::from_unchecked(category.title),
             minimum_read_permission: category.minimum_read_permission.into(),
             minimum_write_permission: category.minimum_write_permission.into(),
             date_created: category.date_created,
         }))
+    }
+
+    async fn posts_from_category(&self, id: &Id) -> Result<Vec<Post>, DatabaseError> {
+        let posts = sqlx::query!("SELECT * FROM post WHERE category_id=?;", id)
+            .fetch_all(&self.pool)
+            .await
+            .with_context(|| format!("unable to get posts"))?;
+
+        Ok(posts
+            .into_iter()
+            .map(|post| Post {
+                id: Id::from_unchecked(post.id),
+                category_id: Id::from_unchecked(post.category_id),
+                title: Title::from_unchecked(post.title),
+                content: Content::from_unchecked(post.content),
+                creator_id: Id::from_unchecked(post.creator_id),
+                date_created: post.date_created,
+            })
+            .collect())
+    }
+
+    async fn all_categories(&self) -> Result<Vec<Category>, DatabaseError> {
+        let categories = sqlx::query!("SELECT * FROM category;")
+            .fetch_all(&self.pool)
+            .await
+            .with_context(|| format!("unable to get categories"))?;
+
+        Ok(categories
+            .into_iter()
+            .map(|category| Category {
+                id: Id::from_unchecked(category.id),
+                title: Title::from_unchecked(category.title),
+                minimum_read_permission: category.minimum_read_permission.into(),
+                minimum_write_permission: category.minimum_write_permission.into(),
+                date_created: category.date_created,
+            })
+            .collect())
+    }
+
+    async fn post_from_id(&self, id: &Id) -> Result<Option<Post>, DatabaseError> {
+        let post = sqlx::query!("SELECT * FROM post WHERE id=?;", id)
+            .fetch_optional(&self.pool)
+            .await
+            .with_context(|| format!("unable to get post with id='{id}'"))?;
+
+        let post = match post {
+            Some(post) => post,
+            None => return Ok(None),
+        };
+
+        Ok(Some(Post {
+            id: Id::from_unchecked(post.id),
+            category_id: Id::from_unchecked(post.category_id),
+            title: Title::from_unchecked(post.title),
+            content: Content::from_unchecked(post.content),
+            creator_id: Id::from_unchecked(post.creator_id),
+            date_created: post.date_created,
+        }))
+    }
+
+    async fn replies_from_post(&self, id: &Id) -> Result<Vec<Reply>, DatabaseError> {
+        let posts = sqlx::query!("SELECT * FROM reply WHERE post_id=?;", id)
+            .fetch_all(&self.pool)
+            .await
+            .with_context(|| format!("unable to get replies"))?;
+
+        Ok(posts
+            .into_iter()
+            .map(|reply| Reply {
+                id: Id::from_unchecked(reply.id),
+                content: Content::from_unchecked(reply.content),
+                creator_id: Id::from_unchecked(reply.creator_id),
+                post_id: Id::from_unchecked(reply.post_id),
+                date_created: reply.date_created,
+            })
+            .collect())
     }
 }

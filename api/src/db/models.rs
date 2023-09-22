@@ -1,16 +1,18 @@
-#![allow(dead_code)]
-
 use crate::from_unchecked::FromUnchecked;
 use derive_more::Display;
-use salvo::prelude::ToSchema;
-use serde::Deserialize;
+use salvo::{oapi, prelude::ToSchema, writing::Json, Scribe};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::password::HashedPassword;
 
-macro_rules! impl_from_for_newtype {
-    ($type: tt, $length_range: expr) => {
-        impl TryFrom<String> for $type {
+macro_rules! define_newtype {
+    ($name: tt, $length_range: expr) => {
+        #[derive(Serialize, Deserialize, sqlx::Type, Display, oapi::ToSchema)]
+        #[sqlx(transparent)]
+        pub struct $name(String);
+
+        impl TryFrom<String> for $name {
             type Error = String;
 
             fn try_from(value: String) -> Result<Self, Self::Error> {
@@ -22,7 +24,7 @@ macro_rules! impl_from_for_newtype {
             }
         }
 
-        impl FromUnchecked<String> for $type {
+        impl FromUnchecked<String> for $name {
             fn from_unchecked(v: String) -> Self {
                 Self(v)
             }
@@ -30,25 +32,23 @@ macro_rules! impl_from_for_newtype {
     };
 }
 
-#[derive(Deserialize, sqlx::Type, Display)]
-#[sqlx(transparent)]
-pub struct Id(String);
-#[derive(Deserialize, sqlx::Type, Display)]
-#[sqlx(transparent)]
-pub struct Content(String);
-#[derive(Deserialize, sqlx::Type, Display)]
-#[sqlx(transparent)]
-pub struct Name(String);
-#[derive(Deserialize, sqlx::Type, Display)]
-#[sqlx(transparent)]
-pub struct Link(String);
+define_newtype!(Id, 36..=36);
+define_newtype!(Content, 24..=1024);
+define_newtype!(Name, 1..=32);
+define_newtype!(Title, 1..=128);
+define_newtype!(Link, 1..);
 
-impl_from_for_newtype!(Id, 36..=36);
-impl_from_for_newtype!(Content, 25..=1000);
-impl_from_for_newtype!(Name, 1..=32);
-impl_from_for_newtype!(Link, 1..);
+macro_rules! impl_json_writer {
+    ($name: ident) => {
+        impl Scribe for $name {
+            fn render(self, res: &mut salvo::Response) {
+                res.render(Json(self))
+            }
+        }
+    };
+}
 
-#[derive(Deserialize, sqlx::Type, Display, ToSchema)]
+#[derive(Serialize, Deserialize, sqlx::Type, Display, ToSchema)]
 pub enum Permission {
     Unverified,
     User,
@@ -85,26 +85,28 @@ pub struct User {
     pub date_created: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, oapi::ToSchema)]
 pub struct Category {
     pub id: Id,
-    pub title: Name,
+    pub title: Title,
     pub minimum_write_permission: Permission,
     pub minimum_read_permission: Permission,
     pub date_created: String,
 }
+impl_json_writer!(Category);
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, oapi::ToSchema)]
 pub struct Post {
     pub id: Id,
     pub category_id: Id,
-    pub title: Name,
+    pub title: Title,
     pub content: Content,
     pub creator_id: Id,
     pub date_created: String,
 }
+impl_json_writer!(Post);
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, oapi::ToSchema)]
 pub struct Reply {
     pub id: Id,
     pub creator_id: Id,
@@ -112,10 +114,13 @@ pub struct Reply {
     pub content: Content,
     pub date_created: String,
 }
+impl_json_writer!(Reply);
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 pub struct Attachment {
     id: Id,
     path: String,
+    creator_id: Id,
     date_created: String,
 }

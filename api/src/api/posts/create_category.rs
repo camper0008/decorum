@@ -7,13 +7,16 @@ use salvo::{
 use serde::Deserialize;
 use tokio::sync::RwLockReadGuard;
 
-use crate::db::{
-    database::{CreateCategory, Database, DatabaseParam},
-    models::Id,
-};
-use crate::permission_verification;
 use crate::{
-    api::response::{MessageResponse, ResponseResult},
+    api::response::Message,
+    db::{
+        database::{CreateCategory, Database, DatabaseParam},
+        models::Id,
+    },
+};
+use crate::{api::response::Response, permission_verification};
+use crate::{
+    api::response::{message_response, MessageResponseResult},
     db::models::Permission,
 };
 
@@ -34,12 +37,12 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     user_id: &Id,
     minimum_read_permission: &Permission,
     minimum_write_permission: &Permission,
-) -> Result<(), MessageResponse> {
+) -> Result<(), Response<Message>> {
     let user = db
         .user_from_id(&user_id)
         .await
-        .map_err(|_| MessageResponse::internal_server_error("internal server error"))?
-        .ok_or_else(|| MessageResponse::unauthorized("invalid session"))?;
+        .map_err(|_| message_response::internal_server_error("internal server error"))?
+        .ok_or_else(|| message_response::unauthorized("invalid session"))?;
 
     if !permission_verification::is_allowed(&user.permission, &Permission::Admin) {
         let err = format!(
@@ -47,7 +50,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
             Permission::Admin,
             user.permission,
         );
-        return Err(MessageResponse::unauthorized(err));
+        return Err(message_response::unauthorized(err));
     }
 
     if !permission_verification::is_allowed(&user.permission, minimum_write_permission) {
@@ -55,21 +58,21 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
             "you must be {} or above to create categories with write permission {}, you are {}",
             minimum_write_permission, minimum_write_permission, user.permission
         );
-        return Err(MessageResponse::unauthorized(err));
+        return Err(message_response::unauthorized(err));
     }
     if !permission_verification::is_allowed(&user.permission, minimum_read_permission) {
         let err = format!(
             "you must be {} or above to create categories with read permission {}, you are {}",
             minimum_read_permission, minimum_read_permission, user.permission
         );
-        return Err(MessageResponse::unauthorized(err));
+        return Err(message_response::unauthorized(err));
     }
 
     Ok(())
 }
 
 #[salvo::endpoint(status_codes(201, 400, 403, 500))]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
     let JsonBody(RouteRequest {
         title,
         minimum_permissions:
@@ -81,16 +84,16 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     let title = title
         .try_into()
-        .map_err(|_| MessageResponse::bad_request("invalid title"))?;
+        .map_err(|_| message_response::bad_request("invalid title"))?;
     let creator_id = depot
         .session()
         .map(|session| session.get::<Id>("user_id"))
         .flatten()
-        .ok_or_else(|| MessageResponse::unauthorized("invalid session"))?;
+        .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()
         .map_err(|err| log::error!("unable to get database from depot: {err:?}"))
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
 
     {
         let db = db.read().await;
@@ -105,8 +108,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
     }
 
-    Ok(MessageResponse::created("created"))
+    Ok(message_response::created("created"))
 }

@@ -7,7 +7,7 @@ use salvo::{
 use serde::Deserialize;
 
 use crate::{
-    api::response::{MessageResponse, ResponseResult},
+    api::response::{message_response, MessageResponseResult},
     db::{database::DatabaseParam, models::Name},
     password::Password,
 };
@@ -19,19 +19,19 @@ struct RouteRequest {
 }
 
 #[salvo::endpoint(status_codes(200, 400, 500))]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
     let JsonBody(RouteRequest { username, password }) = request;
 
     let username =
-        Name::try_from(username).map_err(|_| MessageResponse::bad_request("invalid username"))?;
+        Name::try_from(username).map_err(|_| message_response::bad_request("invalid username"))?;
 
     let password = Password::try_from(password)
-        .map_err(|_| MessageResponse::bad_request("invalid password"))?;
+        .map_err(|_| message_response::bad_request("invalid password"))?;
 
     let db = depot
         .obtain::<DatabaseParam>()
         .map_err(|err| log::error!("unable to get database from depot: {err:?}"))
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
 
     let user = {
         let db = db.read().await;
@@ -39,17 +39,19 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
             .user_from_username(&username)
             .await
             .map_err(|err| log::error!("unable to read username from db: {err:?}"))
-            .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+            .map_err(|()| message_response::internal_server_error("internal server error"))?;
         let user =
-            user.ok_or_else(|| MessageResponse::bad_request("invalid username or password"))?;
+            user.ok_or_else(|| message_response::bad_request("invalid username or password"))?;
         user
     };
     let is_valid = bcrypt::verify::<String>(password.into(), (&user.password).into())
         .map_err(|err| log::error!("unable to verify with bcrypt: {err:?}"))
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
 
     if !is_valid {
-        return Err(MessageResponse::bad_request("invalid username or password"));
+        return Err(message_response::bad_request(
+            "invalid username or password",
+        ));
     }
 
     let mut session = Session::new();
@@ -61,8 +63,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
                 user.id
             )
         })
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
     depot.set_session(session);
 
-    Ok(MessageResponse::ok("success"))
+    Ok(message_response::ok("success"))
 }

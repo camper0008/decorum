@@ -20,7 +20,26 @@ fn openapi_route(router: Router) -> Router {
         .push(SwaggerUi::new("/api-doc/openapi.json").into_router("/swagger-ui"))
 }
 
-fn create_routes() -> Router {
+fn read_routes() -> Router {
+    let limiter = RateLimiter::new(
+        FixedGuard::new(),
+        MokaStore::new(),
+        RemoteIpIssuer,
+        BasicQuota::per_second(30),
+    );
+    Router::with_hoop(limiter)
+        .push(Router::with_path("/posts/all_categories").get(api::posts::all_categories_route))
+        .push(
+            Router::with_path("/posts/posts_from_category/<category_id>")
+                .get(api::posts::posts_from_category_route),
+        )
+        .push(
+            Router::with_path("/posts/replies_from_post/<post_id>")
+                .get(api::posts::replies_from_post_route),
+        )
+}
+
+fn write_routes() -> Router {
     let limiter = RateLimiter::new(
         FixedGuard::new(),
         MokaStore::new(),
@@ -68,7 +87,8 @@ async fn main() -> eyre::Result<()> {
         Router::new()
             .hoop(session_handler)
             .hoop(affix::inject::<DatabaseParam>(database))
-            .push(create_routes()),
+            .push(write_routes())
+            .push(read_routes()),
     );
 
     let router = openapi_route(router);

@@ -7,14 +7,14 @@ use salvo::{
 use serde::Deserialize;
 use tokio::sync::RwLockReadGuard;
 
-use crate::db::{
-    database::{Database, DatabaseParam},
-    models::{Content, Id},
-};
-use crate::permission_verification;
+use crate::{api::response::MessageResponseResult, db::database::CreateReply};
+use crate::{api::response::Response, permission_verification};
 use crate::{
-    api::response::{MessageResponse, ResponseResult},
-    db::database::CreateReply,
+    api::response::{message_response, Message},
+    db::{
+        database::{Database, DatabaseParam},
+        models::{Content, Id},
+    },
 };
 
 #[derive(Deserialize, Extractible, ToSchema)]
@@ -26,19 +26,33 @@ struct RouteRequest {
 async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     db: &RwLockReadGuard<'_, Db>,
     user_id: &Id,
-    category_id: &Id,
-) -> Result<(), MessageResponse> {
+    post_id: &Id,
+) -> Result<(), Response<Message>> {
     let user = db
         .user_from_id(&user_id)
         .await
-        .map_err(|_| MessageResponse::internal_server_error("internal server error"))?
-        .ok_or_else(|| MessageResponse::unauthorized("invalid session"))?;
+        .map_err(|err| log::error!("unable to get user with id '{}': {err:?}", user_id))
+        .map_err(|()| message_response::internal_server_error("internal server error"))?
+        .ok_or_else(|| message_response::unauthorized("invalid session"))?;
+
+    let post = db
+        .post_from_id(&post_id)
+        .await
+        .map_err(|err| log::error!("unable to get post with id '{}': {err:?}", post_id))
+        .map_err(|()| message_response::internal_server_error("internal server error"))?
+        .ok_or_else(|| message_response::bad_request("invalid post id"))?;
 
     let category = db
-        .category_from_id(&category_id)
+        .category_from_id(&post.category_id)
         .await
-        .map_err(|_| MessageResponse::internal_server_error("internal server error"))?
-        .ok_or_else(|| MessageResponse::bad_request("invalid category id"))?;
+        .map_err(|err| {
+            log::error!(
+                "unable to get category with id '{}': {err:?}",
+                post.category_id,
+            )
+        })
+        .map_err(|()| message_response::internal_server_error("internal server error"))?
+        .ok_or_else(|| message_response::bad_request("invalid category id"))?;
 
     if !permission_verification::is_allowed(&user.permission, &category.minimum_write_permission) {
         let err = format!(
@@ -47,30 +61,30 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
             category.title.to_string(),
             user.permission
         );
-        return Err(MessageResponse::unauthorized(err));
+        return Err(message_response::unauthorized(err));
     }
 
     Ok(())
 }
 
 #[salvo::endpoint(status_codes(201, 400, 403, 500))]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
     let JsonBody(RouteRequest { post_id, content }) = request;
 
     let post_id =
-        Id::try_from(post_id).map_err(|_| MessageResponse::bad_request("invalid post id"))?;
+        Id::try_from(post_id).map_err(|_| message_response::bad_request("invalid post id"))?;
     let content =
-        Content::try_from(content).map_err(|_| MessageResponse::bad_request("invalid content"))?;
+        Content::try_from(content).map_err(|_| message_response::bad_request("invalid content"))?;
 
     let creator_id = depot
         .session()
         .map(|session| session.get::<Id>("user_id"))
         .flatten()
-        .ok_or_else(|| MessageResponse::unauthorized("invalid session"))?;
+        .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()
         .map_err(|err| log::error!("unable to get database from depot: {err:?}"))
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
 
     {
         let db = db.read().await;
@@ -85,8 +99,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))
-        .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
+        .map_err(|()| message_response::internal_server_error("internal server error"))?;
     }
 
-    Ok(MessageResponse::created("created"))
+    Ok(message_response::created("created"))
 }

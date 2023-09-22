@@ -5,34 +5,44 @@ use salvo::{
 };
 use serde::Serialize;
 
-pub type ResponseResult = Result<MessageResponse, MessageResponse>;
+pub type MessageResponseResult = Result<Response<Message>, Response<Message>>;
 
-macro_rules! impl_response_helpers {
-    ($name: ident, $code: expr, $ok: expr) => {
-        pub fn $name<S: ToString>(message: S) -> Self {
-            Self {
-                code: $code,
-                data: Data {
-                    ok: $ok,
-                    message: message.to_string(),
-                },
+pub mod message_response {
+    use super::{Message, Response};
+
+    macro_rules! impl_message_response {
+        ($name: ident, $code: expr, $ok: expr) => {
+            pub fn $name<S: ToString>(message: S) -> Response<Message> {
+                Response {
+                    code: $code,
+                    data: Message {
+                        ok: $ok,
+                        message: message.to_string(),
+                    },
+                }
             }
+        };
+    }
+
+    impl_message_response!(ok, 200, true);
+    impl_message_response!(created, 201, true);
+    impl_message_response!(bad_request, 400, false);
+    impl_message_response!(unauthorized, 403, false);
+    impl_message_response!(internal_server_error, 500, false);
+}
+
+macro_rules! impl_response_with {
+    ($name: ident, $code: expr) => {
+        pub fn $name(data: T) -> Response<T> {
+            Response { code: $code, data }
         }
     };
 }
 
-impl MessageResponse {
-    impl_response_helpers!(ok, 200, true);
-    impl_response_helpers!(created, 201, true);
-    impl_response_helpers!(bad_request, 400, false);
-    impl_response_helpers!(unauthorized, 403, false);
-    impl_response_helpers!(internal_server_error, 500, false);
-}
-
-impl EndpointOutRegister for MessageResponse {
+impl<T: ToSchema> EndpointOutRegister for Response<T> {
     #[inline]
     fn register(components: &mut Components, operation: &mut Operation) {
-        let schema = Data::to_schema(components);
+        let schema = T::to_schema(components);
         for code in [
             StatusCode::OK,
             StatusCode::CREATED,
@@ -53,19 +63,23 @@ impl EndpointOutRegister for MessageResponse {
 }
 
 #[derive(oapi::ToSchema)]
-pub struct MessageResponse {
-    data: Data,
+pub struct Response<T: ToSchema + 'static> {
+    data: T,
     code: u16,
 }
 
+impl<T: ToSchema> Response<T> {
+    impl_response_with!(with_ok, 200);
+}
+
 #[derive(Serialize, oapi::ToSchema)]
-struct Data {
+pub struct Message {
     ok: bool,
     message: String,
 }
 
 #[salvo::async_trait]
-impl salvo::Writer for MessageResponse {
+impl<T: ToSchema + Send + Serialize> salvo::Writer for Response<T> {
     async fn write(
         mut self,
         _req: &mut salvo::Request,
