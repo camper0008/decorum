@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO reply (id, content, creator_id, post_id, date_created) VALUES (?, ?, ?, ?, ?);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "3ec001cb5178a122b812fc585c51972da00ff7f64a28b39ae95061db46f78936"
+}

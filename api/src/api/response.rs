@@ -25,7 +25,7 @@ impl MessageResponse {
     impl_response_helpers!(ok, 200, true);
     impl_response_helpers!(created, 201, true);
     impl_response_helpers!(bad_request, 400, false);
-    impl_response_helpers!(unauthorized, 403, true);
+    impl_response_helpers!(unauthorized, 403, false);
     impl_response_helpers!(internal_server_error, 500, false);
 }
 

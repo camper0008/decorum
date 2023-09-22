@@ -1,14 +1,30 @@
 #![allow(dead_code)]
 
+use crate::from_unchecked::FromUnchecked;
 use derive_more::Display;
 use salvo::prelude::ToSchema;
 use serde::Deserialize;
+use uuid::Uuid;
+
+use crate::password::HashedPassword;
 
 macro_rules! impl_from_for_newtype {
-    ($type: tt) => {
-        impl From<String> for $type {
-            fn from(value: String) -> Self {
-                Self(value)
+    ($type: tt, $length_range: expr) => {
+        impl TryFrom<String> for $type {
+            type Error = String;
+
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                if $length_range.contains(&value.len()) {
+                    Ok(Self(value))
+                } else {
+                    Err("length invalid".to_string())
+                }
+            }
+        }
+
+        impl FromUnchecked<String> for $type {
+            fn from_unchecked(v: String) -> Self {
+                Self(v)
             }
         }
     };
@@ -25,16 +41,12 @@ pub struct Content(String);
 pub struct Name(String);
 #[derive(Deserialize, sqlx::Type, Display)]
 #[sqlx(transparent)]
-pub struct Password(String);
-#[derive(Deserialize, sqlx::Type, Display)]
-#[sqlx(transparent)]
 pub struct Link(String);
 
-impl_from_for_newtype!(Id);
-impl_from_for_newtype!(Content);
-impl_from_for_newtype!(Name);
-impl_from_for_newtype!(Password);
-impl_from_for_newtype!(Link);
+impl_from_for_newtype!(Id, 36..=36);
+impl_from_for_newtype!(Content, 25..=1000);
+impl_from_for_newtype!(Name, 1..=32);
+impl_from_for_newtype!(Link, 1..);
 
 #[derive(Deserialize, sqlx::Type, Display, ToSchema)]
 pub enum Permission {
@@ -42,6 +54,12 @@ pub enum Permission {
     User,
     Admin,
     Root,
+}
+
+impl Id {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4().to_string())
+    }
 }
 
 impl From<String> for Permission {
@@ -60,8 +78,8 @@ impl From<String> for Permission {
 pub struct User {
     pub id: Id,
     pub username: Name,
-    pub nickname: Name,
-    pub password: Password,
+    pub nickname: Option<Name>,
+    pub password: HashedPassword,
     pub permission: Permission,
     pub avatar_id: Option<Id>,
     pub date_created: String,

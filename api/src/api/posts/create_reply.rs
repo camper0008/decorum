@@ -9,7 +9,7 @@ use tokio::sync::RwLockReadGuard;
 
 use crate::db::{
     database::{Database, DatabaseParam},
-    models::Id,
+    models::{Content, Id},
 };
 use crate::permission_verification;
 use crate::{
@@ -57,13 +57,12 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
 pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
     let JsonBody(RouteRequest { post_id, content }) = request;
 
-    let post_id = Id::from(post_id);
+    let post_id =
+        Id::try_from(post_id).map_err(|_| MessageResponse::bad_request("invalid post id"))?;
+    let content =
+        Content::try_from(content).map_err(|_| MessageResponse::bad_request("invalid content"))?;
 
-    if content.trim().is_empty() {
-        return Err(MessageResponse::bad_request("content field is empty"));
-    }
-
-    let user_id = depot
+    let creator_id = depot
         .session()
         .map(|session| session.get::<Id>("user_id"))
         .flatten()
@@ -75,13 +74,13 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     {
         let db = db.read().await;
-        verify_valid_user_permission(&db, &user_id, &post_id).await?;
+        verify_valid_user_permission(&db, &creator_id, &post_id).await?;
     }
     {
         let mut db = db.write().await;
         db.create_reply(CreateReply {
-            creator_id: user_id.into(),
-            content: content.into(),
+            creator_id,
+            content,
             post_id,
         })
         .await
@@ -89,5 +88,5 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
     }
 
-    Ok(MessageResponse::ok("created"))
+    Ok(MessageResponse::created("created"))
 }

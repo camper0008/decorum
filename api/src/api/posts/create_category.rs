@@ -79,13 +79,10 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
             },
     }) = request;
 
-    if title.trim().is_empty() {
-        return Err(MessageResponse::bad_request(
-            "title or content field is empty",
-        ));
-    }
-
-    let user_id = depot
+    let title = title
+        .try_into()
+        .map_err(|_| MessageResponse::bad_request("invalid title"))?;
+    let creator_id = depot
         .session()
         .map(|session| session.get::<Id>("user_id"))
         .flatten()
@@ -97,12 +94,12 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     {
         let db = db.read().await;
-        verify_valid_user_permission(&db, &user_id, &read_permission, &write_permission).await?;
+        verify_valid_user_permission(&db, &creator_id, &read_permission, &write_permission).await?;
     }
     {
         let mut db = db.write().await;
         db.create_category(CreateCategory {
-            title: title.into(),
+            title,
             minimum_read_permission: read_permission,
             minimum_write_permission: write_permission,
         })
@@ -111,5 +108,5 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
     }
 
-    Ok(MessageResponse::ok("created"))
+    Ok(MessageResponse::created("created"))
 }

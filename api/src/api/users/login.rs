@@ -8,7 +8,8 @@ use serde::Deserialize;
 
 use crate::{
     api::response::{MessageResponse, ResponseResult},
-    db::database::DatabaseParam,
+    db::{database::DatabaseParam, models::Name},
+    password::Password,
 };
 
 #[derive(Deserialize, Extractible, ToSchema)]
@@ -21,9 +22,11 @@ struct RouteRequest {
 pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
     let JsonBody(RouteRequest { username, password }) = request;
 
-    if username.trim().is_empty() || password.trim().is_empty() {
-        return Err(MessageResponse::bad_request("invalid username or password"));
-    }
+    let username =
+        Name::try_from(username).map_err(|_| MessageResponse::bad_request("invalid username"))?;
+
+    let password = Password::try_from(password)
+        .map_err(|_| MessageResponse::bad_request("invalid password"))?;
 
     let db = depot
         .obtain::<DatabaseParam>()
@@ -41,7 +44,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
             user.ok_or_else(|| MessageResponse::bad_request("invalid username or password"))?;
         user
     };
-    let is_valid = bcrypt::verify(&password, &user.password.to_string())
+    let is_valid = bcrypt::verify::<String>(password.into(), (&user.password).into())
         .map_err(|err| log::error!("unable to verify with bcrypt: {err:?}"))
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
 

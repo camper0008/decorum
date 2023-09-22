@@ -1,6 +1,8 @@
 mod api;
 mod db;
+mod from_unchecked;
 mod iso_date_strings;
+mod password;
 mod permission_verification;
 
 use std::sync::Arc;
@@ -33,11 +35,10 @@ fn create_routes() -> Router {
         .push(Router::with_path("/posts/create_reply").post(api::posts::create_reply_route))
 }
 
-// TODO: read <X> api
-// TODO: ban user api + 'wipe' option
-// TODO: unban user api?
-// TODO: delete (...) api
-// TODO: make invalid states unrepresentable (impl T::TryInto)
+/// TODO: read <X> api
+/// TODO: ban user api + 'wipe' option
+/// TODO: unban user api?
+/// TODO: delete (...) api
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

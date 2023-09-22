@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS user;
 CREATE TABLE user (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     username TEXT NOT NULL,
-    nickname TEXT NOT NULL,
+    nickname TEXT,
     password TEXT NOT NULL,
     permission TEXT NOT NULL,
     avatar_id VARCHAR(36),

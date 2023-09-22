@@ -9,8 +9,9 @@ use crate::{
     api::response::{MessageResponse, ResponseResult},
     db::{
         database::{CreateUser, DatabaseParam},
-        models::Permission,
+        models::{Name, Permission},
     },
+    password::{Password, PasswordError},
 };
 
 #[derive(Deserialize, Extractible, ToSchema)]
@@ -23,9 +24,17 @@ struct RouteRequest {
 pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> ResponseResult {
     let JsonBody(RouteRequest { username, password }) = request;
 
-    if username.trim().is_empty() || password.trim().is_empty() {
-        return Err(MessageResponse::bad_request("invalid username or password"));
-    }
+    let username: Name = username
+        .try_into()
+        .map_err(|err| MessageResponse::bad_request(err))?;
+
+    let password: Password = password.try_into().map_err(|err| {
+        MessageResponse::bad_request(match err {
+            PasswordError::TooShort(_) => "invalid password: too short",
+            PasswordError::TooLong(_) => "invalid password: too long",
+            PasswordError::InvalidCharacters => "invalid password: invalid characters",
+        })
+    })?;
 
     let db = depot
         .obtain::<DatabaseParam>()
@@ -43,16 +52,23 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
             return Err(MessageResponse::bad_request("user already exists"));
         }
     }
-    let password = bcrypt::hash(password, bcrypt::DEFAULT_COST)
+    let password = bcrypt::hash::<String>(password.into(), bcrypt::DEFAULT_COST)
         .map_err(|err| log::error!("unable to hash pw: {err:?}"))
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
     {
         let mut db = db.write().await;
-        let nickname = username.clone();
+
+        let username = username
+            .try_into()
+            .map_err(|_| MessageResponse::bad_request("invalid username length"))?;
+        let password = password
+            .try_into()
+            .map_err(|_| MessageResponse::bad_request("invalid password length"))?;
+
         db.create_user(CreateUser {
-            username: username.into(),
-            nickname: nickname.into(),
-            password: password.into(),
+            username,
+            nickname: None,
+            password,
             permission: Permission::Unverified,
             avatar_id: None,
         })

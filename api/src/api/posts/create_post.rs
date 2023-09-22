@@ -7,12 +7,15 @@ use salvo::{
 use serde::Deserialize;
 use tokio::sync::RwLockReadGuard;
 
-use crate::api::response::{MessageResponse, ResponseResult};
 use crate::db::{
     database::{CreatePost, Database, DatabaseParam},
-    models::Id,
+    models::{Content, Id},
 };
 use crate::permission_verification;
+use crate::{
+    api::response::{MessageResponse, ResponseResult},
+    db::models::Name,
+};
 
 #[derive(Deserialize, Extractible, ToSchema)]
 struct RouteRequest {
@@ -59,15 +62,13 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
         content,
     }) = request;
 
-    let category_id = Id::from(category_id);
+    let category_id = Id::try_from(category_id)
+        .map_err(|_| MessageResponse::bad_request("invalid category id"))?;
+    let title = Name::try_from(title).map_err(|_| MessageResponse::bad_request("invalid title"))?;
+    let content =
+        Content::try_from(content).map_err(|_| MessageResponse::bad_request("invalid content"))?;
 
-    if title.trim().is_empty() || content.trim().is_empty() {
-        return Err(MessageResponse::bad_request(
-            "title or content field is empty",
-        ));
-    }
-
-    let user_id = depot
+    let creator_id = depot
         .session()
         .map(|session| session.get::<Id>("user_id"))
         .flatten()
@@ -79,20 +80,20 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Respon
 
     {
         let db = db.read().await;
-        verify_valid_user_permission(&db, &user_id, &category_id).await?;
+        verify_valid_user_permission(&db, &creator_id, &category_id).await?;
     }
     {
         let mut db = db.write().await;
         db.create_post(CreatePost {
             category_id,
-            title: title.into(),
+            title,
             content,
-            creator_id: user_id,
+            creator_id,
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))
         .map_err(|()| MessageResponse::internal_server_error("internal server error"))?;
     }
 
-    Ok(MessageResponse::ok("created"))
+    Ok(MessageResponse::created("created"))
 }
