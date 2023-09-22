@@ -40,9 +40,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
             .await
             .map_err(|err| log::error!("unable to read username from db: {err:?}"))
             .map_err(|()| message_response::internal_server_error("internal server error"))?;
-        let user =
-            user.ok_or_else(|| message_response::bad_request("invalid username or password"))?;
-        user
+        user.ok_or_else(|| message_response::bad_request("invalid username or password"))?
     };
     let is_valid = bcrypt::verify::<String>(password.into(), (&user.password).into())
         .map_err(|err| log::error!("unable to verify with bcrypt: {err:?}"))

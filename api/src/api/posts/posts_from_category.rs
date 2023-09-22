@@ -22,8 +22,7 @@ pub async fn route(
 ) -> Result<Response<RouteResponse>, Response<Message>> {
     let user_id = depot
         .session()
-        .map(|session| session.get::<Id>("user_id"))
-        .flatten()
+        .and_then(|session| session.get::<Id>("user_id"))
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()
@@ -49,9 +48,7 @@ pub async fn route(
     if !permission_verification::is_allowed(&permission, &category.minimum_read_permission) {
         let err = format!(
             "you must be {} or above to read posts in category {}, you are {}",
-            category.minimum_read_permission,
-            category.title.to_string(),
-            permission
+            category.minimum_read_permission, category.title, permission
         );
         return Err(message_response::unauthorized(err));
     };

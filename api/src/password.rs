@@ -45,13 +45,13 @@ impl TryFrom<String> for Password {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let len = value.len();
         if len < 8 {
-            return Err(Self::Error::TooShort(len));
+            Err(Self::Error::TooShort(len))
         } else if len > 40 {
-            return Err(Self::Error::TooLong(len));
+            Err(Self::Error::TooLong(len))
         } else if !value.is_ascii() {
-            return Err(Self::Error::InvalidCharacters);
+            Err(Self::Error::InvalidCharacters)
         } else {
-            return Ok(Password(value));
+            Ok(Password(value))
         }
     }
 }

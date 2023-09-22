@@ -19,8 +19,7 @@ struct RouteResponse {
 pub async fn route(depot: &mut Depot) -> Result<Response<RouteResponse>, Response<Message>> {
     let user_id = depot
         .session()
-        .map(|session| session.get::<Id>("user_id"))
-        .flatten()
+        .and_then(|session| session.get::<Id>("user_id"))
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()

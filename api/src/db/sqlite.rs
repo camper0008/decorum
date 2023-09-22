@@ -104,7 +104,7 @@ impl Database for SqliteDb {
             password,
             avatar_id,
             permission: user.permission.into(),
-            date_created: user.date_created.into(),
+            date_created: user.date_created,
         }))
     }
     async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError> {
@@ -207,7 +207,7 @@ impl Database for SqliteDb {
         let posts = sqlx::query!("SELECT * FROM post WHERE category_id=?;", id)
             .fetch_all(&self.pool)
             .await
-            .with_context(|| format!("unable to get posts"))?;
+            .with_context(|| "unable to get posts")?;
 
         Ok(posts
             .into_iter()
@@ -226,7 +226,7 @@ impl Database for SqliteDb {
         let categories = sqlx::query!("SELECT * FROM category;")
             .fetch_all(&self.pool)
             .await
-            .with_context(|| format!("unable to get categories"))?;
+            .with_context(|| "unable to get categories")?;
 
         Ok(categories
             .into_iter()
@@ -265,7 +265,7 @@ impl Database for SqliteDb {
         let posts = sqlx::query!("SELECT * FROM reply WHERE post_id=?;", id)
             .fetch_all(&self.pool)
             .await
-            .with_context(|| format!("unable to get replies"))?;
+            .with_context(|| "unable to get replies")?;
 
         Ok(posts
             .into_iter()

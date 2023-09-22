@@ -29,14 +29,14 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     post_id: &Id,
 ) -> Result<(), Response<Message>> {
     let user = db
-        .user_from_id(&user_id)
+        .user_from_id(user_id)
         .await
         .map_err(|err| log::error!("unable to get user with id '{}': {err:?}", user_id))
         .map_err(|()| message_response::internal_server_error("internal server error"))?
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
 
     let post = db
-        .post_from_id(&post_id)
+        .post_from_id(post_id)
         .await
         .map_err(|err| log::error!("unable to get post with id '{}': {err:?}", post_id))
         .map_err(|()| message_response::internal_server_error("internal server error"))?
@@ -57,9 +57,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     if !permission_verification::is_allowed(&user.permission, &category.minimum_write_permission) {
         let err = format!(
             "you must be {} or above to create replies in category {}, you are {}",
-            category.minimum_write_permission,
-            category.title.to_string(),
-            user.permission
+            category.minimum_write_permission, category.title, user.permission
         );
         return Err(message_response::unauthorized(err));
     }
@@ -78,8 +76,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
 
     let creator_id = depot
         .session()
-        .map(|session| session.get::<Id>("user_id"))
-        .flatten()
+        .and_then(|session| session.get::<Id>("user_id"))
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()

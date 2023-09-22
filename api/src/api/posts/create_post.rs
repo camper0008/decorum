@@ -30,13 +30,13 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     category_id: &Id,
 ) -> Result<(), Response<Message>> {
     let user = db
-        .user_from_id(&user_id)
+        .user_from_id(user_id)
         .await
         .map_err(|_| message_response::internal_server_error("internal server error"))?
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
 
     let category = db
-        .category_from_id(&category_id)
+        .category_from_id(category_id)
         .await
         .map_err(|_| message_response::internal_server_error("internal server error"))?
         .ok_or_else(|| message_response::bad_request("invalid category id"))?;
@@ -44,9 +44,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     if !permission_verification::is_allowed(&user.permission, &category.minimum_write_permission) {
         let err = format!(
             "you must be {} or above to create posts in category {}, you are {}",
-            category.minimum_write_permission,
-            category.title.to_string(),
-            user.permission
+            category.minimum_write_permission, category.title, user.permission
         );
         return Err(message_response::unauthorized(err));
     }
@@ -71,8 +69,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
 
     let creator_id = depot
         .session()
-        .map(|session| session.get::<Id>("user_id"))
-        .flatten()
+        .and_then(|session| session.get::<Id>("user_id"))
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()

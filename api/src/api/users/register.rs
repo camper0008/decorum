@@ -24,9 +24,7 @@ struct RouteRequest {
 pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
     let JsonBody(RouteRequest { username, password }) = request;
 
-    let username: Name = username
-        .try_into()
-        .map_err(|err| message_response::bad_request(err))?;
+    let username: Name = username.try_into().map_err(message_response::bad_request)?;
 
     let password: Password = password.try_into().map_err(|err| {
         message_response::bad_request(match err {
@@ -58,9 +56,6 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
     {
         let mut db = db.write().await;
 
-        let username = username
-            .try_into()
-            .map_err(|_| message_response::bad_request("invalid username length"))?;
         let password = password
             .try_into()
             .map_err(|_| message_response::bad_request("invalid password length"))?;

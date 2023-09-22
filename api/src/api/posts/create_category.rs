@@ -39,7 +39,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
     minimum_write_permission: &Permission,
 ) -> Result<(), Response<Message>> {
     let user = db
-        .user_from_id(&user_id)
+        .user_from_id(user_id)
         .await
         .map_err(|_| message_response::internal_server_error("internal server error"))?
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
@@ -87,8 +87,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         .map_err(|_| message_response::bad_request("invalid title"))?;
     let creator_id = depot
         .session()
-        .map(|session| session.get::<Id>("user_id"))
-        .flatten()
+        .and_then(|session| session.get::<Id>("user_id"))
         .ok_or_else(|| message_response::unauthorized("invalid session"))?;
     let db = depot
         .obtain::<DatabaseParam>()
