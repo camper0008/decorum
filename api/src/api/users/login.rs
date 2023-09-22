@@ -59,7 +59,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
             log::error!(
                 "unable to insert user session for user {}: {err:?}",
                 user.id
-            )
+            );
         })
         .map_err(|()| message_response::internal_server_error("internal server error"))?;
     depot.set_session(session);

@@ -32,8 +32,7 @@ pub async fn route(depot: &mut Depot) -> Result<Response<RouteResponse>, Respons
         .await
         .map_err(|err| log::error!("unable to get user from id: {err:?}"))
         .map_err(|()| message_response::internal_server_error("internal server error"))?
-        .map(|user| user.permission)
-        .unwrap_or(Permission::Unverified);
+        .map_or(Permission::Unverified, |user| user.permission);
     let categories = db
         .all_categories()
         .await

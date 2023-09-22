@@ -1,3 +1,8 @@
+#![allow(clippy::module_name_repetitions)]
+#![warn(clippy::unwrap_used)]
+#![warn(clippy::manual_unwrap_or)]
+#![warn(clippy::map_unwrap_or)]
+
 mod api;
 mod db;
 mod from_unchecked;

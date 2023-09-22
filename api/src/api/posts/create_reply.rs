@@ -49,7 +49,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
             log::error!(
                 "unable to get category with id '{}': {err:?}",
                 post.category_id,
-            )
+            );
         })
         .map_err(|()| message_response::internal_server_error("internal server error"))?
         .ok_or_else(|| message_response::bad_request("invalid category id"))?;
@@ -91,8 +91,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         let mut db = db.write().await;
         db.create_reply(CreateReply {
             creator_id,
-            content,
             post_id,
+            content,
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))

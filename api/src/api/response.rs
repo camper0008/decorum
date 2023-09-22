@@ -57,7 +57,7 @@ impl<T: ToSchema> EndpointOutRegister for Response<T> {
                         .unwrap_or("No further explanation is available."),
                 )
                 .add_content("application/json", schema.clone()),
-            )
+            );
         }
     }
 }

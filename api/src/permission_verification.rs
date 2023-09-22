@@ -1,14 +1,13 @@
 use crate::db::models::Permission;
 
 pub fn is_allowed(user_permission: &Permission, required_permission: &Permission) -> bool {
-    use Permission::*;
+    use Permission::{Admin, Root, Unverified, User};
     match (user_permission, required_permission) {
-        (Unverified, Unverified) => true,
-        (Unverified, User | Admin | Root) => false,
-        (User, Unverified | User) => true,
-        (User, Admin | Root) => false,
-        (Admin, Unverified | User | Admin) => true,
-        (Admin, Root) => false,
-        (Root, Unverified | Admin | User | Root) => true,
+        (Unverified, Unverified)
+        | (User, Unverified | User)
+        | (Admin, Unverified | User | Admin)
+        | (Root, Unverified | Admin | User | Root) => true,
+
+        (Unverified, User | Admin | Root) | (User, Admin | Root) | (Admin, Root) => false,
     }
 }

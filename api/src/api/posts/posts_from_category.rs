@@ -35,8 +35,7 @@ pub async fn route(
         .await
         .map_err(|err| log::error!("unable to get user from id: {err:?}"))
         .map_err(|()| message_response::internal_server_error("internal server error"))?
-        .map(|user| user.permission)
-        .unwrap_or(Permission::Unverified);
+        .map_or(Permission::Unverified, |user| user.permission);
 
     let category = db
         .category_from_id(&category_id)
@@ -57,7 +56,7 @@ pub async fn route(
         .posts_from_category(&category_id)
         .await
         .map_err(|err| {
-            log::error!("unable to get posts from category with id {category_id}: {err:?}")
+            log::error!("unable to get posts from category with id {category_id}: {err:?}");
         })
         .map_err(|()| message_response::internal_server_error("internal server error"))?;
 

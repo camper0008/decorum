@@ -86,9 +86,8 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get user with username='{username}'"))?;
 
-        let user = match user {
-            Some(user) => user,
-            None => return Ok(None),
+        let Some(user) = user else {
+            return Ok(None);
         };
 
         let id = Id::from_unchecked(user.id);
@@ -189,9 +188,8 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get category with id='{id}'"))?;
 
-        let category = match category {
-            Some(category) => category,
-            None => return Ok(None),
+        let Some(category) = category else {
+             return Ok(None);
         };
 
         Ok(Some(Category {
@@ -246,9 +244,8 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get post with id='{id}'"))?;
 
-        let post = match post {
-            Some(post) => post,
-            None => return Ok(None),
+        let Some(post) = post else {
+            return Ok(None);
         };
 
         Ok(Some(Post {
