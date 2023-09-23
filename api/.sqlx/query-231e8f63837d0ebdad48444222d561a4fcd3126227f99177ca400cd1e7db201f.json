@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM user WHERE id=?;",
+  "query": "SELECT * FROM post WHERE id=?;",
   "describe": {
     "columns": [
       {
@@ -9,27 +9,27 @@
         "type_info": "Text"
       },
       {
-        "name": "username",
+        "name": "title",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "nickname",
+        "name": "content",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "password",
+        "name": "category_id",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "permission",
+        "name": "creator_id",
         "ordinal": 4,
         "type_info": "Text"
       },
       {
-        "name": "avatar_id",
+        "name": "date_edited",
         "ordinal": 5,
         "type_info": "Text"
       },
@@ -39,8 +39,13 @@
         "type_info": "Text"
       },
       {
-        "name": "deleted",
+        "name": "locked",
         "ordinal": 7,
+        "type_info": "Int64"
+      },
+      {
+        "name": "deleted",
+        "ordinal": 8,
         "type_info": "Int64"
       }
     ],
@@ -50,13 +55,14 @@
     "nullable": [
       false,
       false,
-      true,
       false,
       false,
-      true,
+      false,
+      false,
+      false,
       false,
       false
     ]
   },
-  "hash": "2a6482145333e35b8f6e77853331decf6f4b88f49be0dcc42be037bad1f402a1"
+  "hash": "231e8f63837d0ebdad48444222d561a4fcd3126227f99177ca400cd1e7db201f"
 }

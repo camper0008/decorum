@@ -7,6 +7,7 @@ CREATE TABLE user (
     permission TEXT NOT NULL,
     avatar_id VARCHAR(36),
     date_created TEXT NOT NULL,
+    deleted INTEGER not null,
     FOREIGN KEY(avatar_id) REFERENCES attachment(id)
 );
 
@@ -16,6 +17,8 @@ CREATE TABLE category (
     title TEXT NOT NULL,
     minimum_write_permission TEXT NOT NULL,
     minimum_read_permission TEXT NOT NULL,
+    deleted INTEGER not null,
+    date_edited TEXT,
     date_created TEXT NOT NULL
 );
 
@@ -26,7 +29,10 @@ CREATE TABLE post (
     content TEXT NOT NULL,
     category_id VARCHAR(36) NOT NULL,
     creator_id VARCHAR(36) NOT NULL,
+    date_edited TEXT,
     date_created TEXT NOT NULL,
+    locked INTEGER not null,
+    deleted INTEGER not null,
     FOREIGN KEY(creator_id) REFERENCES user(id)
 );
 
@@ -36,7 +42,9 @@ CREATE TABLE reply (
     creator_id VARCHAR(36) NOT NULL,
     content TEXT NOT NULL,
     post_id VARCHAR(36) NOT NULL,
+    date_edited TEXT,
     date_created TEXT NOT NULL,
+    deleted INTEGER not null,
     FOREIGN KEY(post_id) REFERENCES post(id),
     FOREIGN KEY(creator_id) REFERENCES user(id)
 );
@@ -46,5 +54,7 @@ DROP TABLE IF EXISTS attachment;
 CREATE TABLE attachment (
     id VARCHAR(36) PRIMARY KEY NOT NULL,
     path TEXT NOT NULL,
-    date_created TEXT NOT NULL
+    creator_id VARCHAR(36) NOT NULL,
+    date_created TEXT NOT NULL,
+    FOREIGN KEY(creator_id) REFERENCES user(id)
 );

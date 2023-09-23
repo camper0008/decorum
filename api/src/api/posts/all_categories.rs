@@ -19,20 +19,22 @@ struct RouteResponse {
 pub async fn route(depot: &mut Depot) -> Result<Response<RouteResponse>, Response<Message>> {
     let user_id = depot
         .session()
-        .and_then(|session| session.get::<Id>("user_id"))
-        .ok_or_else(|| message_response::unauthorized("invalid session"))?;
+        .and_then(|session| session.get::<Id>("user_id"));
     let db = depot
         .obtain::<DatabaseParam>()
         .map_err(|err| log::error!("unable to get database from depot: {err:?}"))
         .map_err(|()| message_response::internal_server_error("internal server error"))?;
 
     let db = db.read().await;
-    let permission = db
-        .user_from_id(&user_id)
-        .await
-        .map_err(|err| log::error!("unable to get user from id: {err:?}"))
-        .map_err(|()| message_response::internal_server_error("internal server error"))?
-        .map_or(Permission::Unverified, |user| user.permission);
+    let permission = if let Some(user_id) = user_id {
+        db.user_from_id(&user_id)
+            .await
+            .map_err(|err| log::error!("unable to get user from id: {err:?}"))
+            .map_err(|()| message_response::internal_server_error("internal server error"))?
+            .map_or(Permission::Unverified, |user| user.permission)
+    } else {
+        Permission::Unverified
+    };
     let categories = db
         .all_categories()
         .await

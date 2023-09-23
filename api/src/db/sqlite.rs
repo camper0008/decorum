@@ -8,7 +8,10 @@ use crate::{
 };
 
 use super::{
-    database::{CreateCategory, CreatePost, CreateReply, CreateUser, Database, DatabaseError},
+    database::{
+        CreateCategory, CreatePost, CreateReply, CreateUser, Database, DatabaseError, EditCategory,
+        EditPost, EditReply,
+    },
     models::{Category, Content, Id, Name, Post, Reply, Title, User},
 };
 
@@ -28,7 +31,7 @@ impl SqliteDb {
 
 #[salvo::async_trait]
 impl Database for SqliteDb {
-    async fn create_user(&mut self, data: CreateUser) -> Result<User, DatabaseError> {
+    async fn create_user(&mut self, data: CreateUser) -> Result<(), DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -46,23 +49,15 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert user")?;
 
-        Ok(User {
-            id,
-            username: data.username,
-            nickname: data.nickname,
-            password: data.password,
-            permission: data.permission,
-            avatar_id: data.avatar_id,
-            date_created,
-        })
+        Ok(())
     }
-    async fn delete_user_with_id(&mut self, id: &Id) -> Result<Option<User>, DatabaseError> {
+    async fn delete_user_with_id(&mut self, id: &Id) -> Result<(), DatabaseError> {
         let user = self.user_from_id(id).await?;
         sqlx::query!("DELETE FROM user WHERE id=?;", id)
             .execute(&self.pool)
             .await
             .with_context(|| format!("unable to delete user with id='{id}'"))?;
-        Ok(user)
+        Ok(())
     }
     async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError> {
         let user = sqlx::query!("SELECT * FROM user WHERE id=?;", id)
@@ -86,27 +81,17 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get user with username='{username}'"))?;
 
-        let Some(user) = user else {
-            return Ok(None);
-        };
-
-        let id = Id::from_unchecked(user.id);
-        let username = Name::from_unchecked(user.username);
-        let nickname = user.nickname.map(Name::from_unchecked);
-        let password = HashedPassword::from_unchecked(user.password);
-        let avatar_id = user.avatar_id.map(Id::from_unchecked);
-
-        Ok(Some(User {
-            id,
-            username,
-            nickname,
-            password,
-            avatar_id,
+        Ok(user.map(|user| User {
+            id: Id::from_unchecked(user.id),
+            username: Name::from_unchecked(user.username),
+            nickname: user.nickname.map(Name::from_unchecked),
+            password: HashedPassword::from_unchecked(user.password),
+            avatar_id: user.avatar_id.map(Id::from_unchecked),
             permission: user.permission.into(),
             date_created: user.date_created,
         }))
     }
-    async fn create_post(&mut self, data: CreatePost) -> Result<Post, DatabaseError> {
+    async fn create_post(&mut self, data: CreatePost) -> Result<(), DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -123,17 +108,10 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert post")?;
 
-        Ok(Post {
-            id,
-            title: data.title,
-            content: data.content,
-            category_id: data.category_id,
-            creator_id: data.creator_id,
-            date_created,
-        })
+        Ok(())
     }
 
-    async fn create_reply(&mut self, data: CreateReply) -> Result<Reply, DatabaseError> {
+    async fn create_reply(&mut self, data: CreateReply) -> Result<(), DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -149,16 +127,10 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert reply")?;
 
-        Ok(Reply {
-            id,
-            content: data.content,
-            creator_id: data.creator_id,
-            post_id: data.post_id,
-            date_created,
-        })
+        Ok(())
     }
 
-    async fn create_category(&mut self, data: CreateCategory) -> Result<Category, DatabaseError> {
+    async fn create_category(&mut self, data: CreateCategory) -> Result<(), DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -174,30 +146,79 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert category")?;
 
-        Ok(Category {
-            id,
-            title: data.title,
-            minimum_read_permission: data.minimum_read_permission,
-            minimum_write_permission: data.minimum_write_permission,
-            date_created,
-        })
+        Ok(())
     }
+
+    async fn edit_category(&mut self, data: EditCategory) -> Result<(), DatabaseError> {
+        let date_edited = utc_date_iso_string();
+
+        sqlx::query!(
+            "UPDATE category SET title=?, minimum_read_permission=?, minimum_write_permission=?, deleted=?, date_edited=? WHERE id=?;",
+            data.title,
+            data.minimum_read_permission,
+            data.minimum_write_permission,
+            data.deleted,
+            date_edited,
+            data.id,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to edit category")?;
+
+        Ok(())
+    }
+
+    async fn edit_post(&mut self, data: EditPost) -> Result<(), DatabaseError> {
+        let date_edited = utc_date_iso_string();
+
+        sqlx::query!(
+            "UPDATE post SET title=?, content=?, category_id=?, date_edited=?, deleted=?, locked=? WHERE id=?;",
+            data.title,
+            data.category_id,
+            data.content,
+            date_edited,
+            data.deleted,
+            data.locked,
+            data.id,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to edit post")?;
+
+        Ok(())
+    }
+
+    async fn edit_reply(&mut self, data: EditReply) -> Result<(), DatabaseError> {
+        let date_edited = utc_date_iso_string();
+
+        sqlx::query!(
+            "UPDATE reply SET content=?, deleted=?, date_edited=? WHERE id=?;",
+            data.content,
+            data.deleted,
+            date_edited,
+            data.id,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to reply post")?;
+
+        Ok(())
+    }
+
     async fn category_from_id(&self, id: &Id) -> Result<Option<Category>, DatabaseError> {
         let category = sqlx::query!("SELECT * FROM category WHERE id=?;", id)
             .fetch_optional(&self.pool)
             .await
             .with_context(|| format!("unable to get category with id='{id}'"))?;
 
-        let Some(category) = category else {
-             return Ok(None);
-        };
-
-        Ok(Some(Category {
+        Ok(category.map(|category| Category {
             id: Id::from_unchecked(category.id),
             title: Title::from_unchecked(category.title),
             minimum_read_permission: category.minimum_read_permission.into(),
             minimum_write_permission: category.minimum_write_permission.into(),
             date_created: category.date_created,
+            date_edited: category.date_edited,
+            deleted: category.deleted != 0,
         }))
     }
 
@@ -216,6 +237,9 @@ impl Database for SqliteDb {
                 content: Content::from_unchecked(post.content),
                 creator_id: Id::from_unchecked(post.creator_id),
                 date_created: post.date_created,
+                date_edited: post.date_edited,
+                deleted: post.deleted != 0,
+                locked: post.locked != 0,
             })
             .collect())
     }
@@ -234,6 +258,8 @@ impl Database for SqliteDb {
                 minimum_read_permission: category.minimum_read_permission.into(),
                 minimum_write_permission: category.minimum_write_permission.into(),
                 date_created: category.date_created,
+                date_edited: category.date_edited,
+                deleted: category.deleted != 0,
             })
             .collect())
     }
@@ -244,17 +270,16 @@ impl Database for SqliteDb {
             .await
             .with_context(|| format!("unable to get post with id='{id}'"))?;
 
-        let Some(post) = post else {
-            return Ok(None);
-        };
-
-        Ok(Some(Post {
+        Ok(post.map(|post| Post {
             id: Id::from_unchecked(post.id),
             category_id: Id::from_unchecked(post.category_id),
             title: Title::from_unchecked(post.title),
             content: Content::from_unchecked(post.content),
             creator_id: Id::from_unchecked(post.creator_id),
             date_created: post.date_created,
+            date_edited: post.date_edited,
+            deleted: post.deleted != 0,
+            locked: post.locked != 0,
         }))
     }
 
@@ -272,7 +297,26 @@ impl Database for SqliteDb {
                 creator_id: Id::from_unchecked(reply.creator_id),
                 post_id: Id::from_unchecked(reply.post_id),
                 date_created: reply.date_created,
+                date_edited: reply.date_edited,
+                deleted: reply.deleted != 0,
             })
             .collect())
+    }
+
+    async fn reply_from_id(&self, id: &Id) -> Result<Option<Reply>, DatabaseError> {
+        let post = sqlx::query!("SELECT * FROM reply WHERE id=?;", id)
+            .fetch_optional(&self.pool)
+            .await
+            .with_context(|| "unable to get reply")?;
+
+        Ok(post.map(|reply| Reply {
+            id: Id::from_unchecked(reply.id),
+            content: Content::from_unchecked(reply.content),
+            creator_id: Id::from_unchecked(reply.creator_id),
+            post_id: Id::from_unchecked(reply.post_id),
+            date_created: reply.date_created,
+            date_edited: reply.date_edited,
+            deleted: reply.deleted != 0,
+        }))
     }
 }

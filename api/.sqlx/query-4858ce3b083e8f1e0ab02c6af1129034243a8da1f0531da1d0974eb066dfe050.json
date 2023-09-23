@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM user WHERE id=?;",
+  "query": "SELECT * FROM category;",
   "describe": {
     "columns": [
       {
@@ -9,27 +9,27 @@
         "type_info": "Text"
       },
       {
-        "name": "username",
+        "name": "title",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "nickname",
+        "name": "minimum_write_permission",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "password",
+        "name": "minimum_read_permission",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "permission",
+        "name": "deleted",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
-        "name": "avatar_id",
+        "name": "date_edited",
         "ordinal": 5,
         "type_info": "Text"
       },
@@ -37,26 +37,20 @@
         "name": "date_created",
         "ordinal": 6,
         "type_info": "Text"
-      },
-      {
-        "name": "deleted",
-        "ordinal": 7,
-        "type_info": "Int64"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 0
     },
     "nullable": [
       false,
       false,
-      true,
       false,
       false,
-      true,
+      false,
       false,
       false
     ]
   },
-  "hash": "2a6482145333e35b8f6e77853331decf6f4b88f49be0dcc42be037bad1f402a1"
+  "hash": "4858ce3b083e8f1e0ab02c6af1129034243a8da1f0531da1d0974eb066dfe050"
 }

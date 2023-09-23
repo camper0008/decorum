@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE category SET title=?, minimum_read_permission=?, minimum_write_permission=?, deleted=?, date_edited=?;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "a1ee634122aaa4dace62547322cbe557771343c839717e1b01b519ac72c1e9e7"
+}

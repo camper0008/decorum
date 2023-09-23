@@ -42,6 +42,9 @@ fn read_routes() -> Router {
             Router::with_path("/posts/replies_from_post/<post_id>")
                 .get(api::posts::replies_from_post_route),
         )
+        .push(
+            Router::with_path("/users/user_from_id/<user_id>").get(api::users::user_from_id_route),
+        )
 }
 
 fn write_routes() -> Router {
@@ -49,7 +52,7 @@ fn write_routes() -> Router {
         FixedGuard::new(),
         MokaStore::new(),
         RemoteIpIssuer,
-        BasicQuota::per_minute(30),
+        BasicQuota::per_minute(10),
     );
     Router::with_hoop(limiter)
         .push(Router::with_path("/users/register").post(api::users::register_route))
@@ -57,12 +60,20 @@ fn write_routes() -> Router {
         .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
         .push(Router::with_path("/posts/create_category").post(api::posts::create_category_route))
         .push(Router::with_path("/posts/create_reply").post(api::posts::create_reply_route))
+        .push(Router::with_path("/posts/lock_post").post(api::posts::lock_post_route))
+        .push(Router::with_path("/posts/edit_post").post(api::posts::edit_post_route))
+        .push(Router::with_path("/posts/edit_category").post(api::posts::edit_category_route))
+        .push(Router::with_path("/posts/edit_reply").post(api::posts::edit_reply_route))
+        .push(Router::with_path("/posts/remove_post").post(api::posts::remove_post_route))
+        .push(Router::with_path("/posts/remove_category").post(api::posts::remove_category_route))
+        .push(Router::with_path("/posts/remove_reply").post(api::posts::remove_reply_route))
+        .push(Router::with_path("/posts/edit_post_lock_status").post(api::posts::lock_post_route))
 }
 
-/// TODO: read <X> api
 /// TODO: ban user api + 'wipe' option
-/// TODO: unban user api?
-/// TODO: delete (...) api
+/// TODO: unban user api
+/// TODO: attachment get
+/// TODO: attachment upload
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

@@ -37,6 +37,11 @@
         "name": "date_created",
         "ordinal": 6,
         "type_info": "Text"
+      },
+      {
+        "name": "deleted",
+        "ordinal": 7,
+        "type_info": "Int64"
       }
     ],
     "parameters": {
@@ -49,6 +54,7 @@
       false,
       false,
       true,
+      false,
       false
     ]
   },

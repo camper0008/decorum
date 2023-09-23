@@ -8,7 +8,7 @@ use crate::password::HashedPassword;
 
 macro_rules! define_newtype {
     ($name: tt, $length_range: expr) => {
-        #[derive(Serialize, Deserialize, sqlx::Type, Display, oapi::ToSchema)]
+        #[derive(Serialize, Deserialize, sqlx::Type, Display, oapi::ToSchema, PartialEq)]
         #[sqlx(transparent)]
         pub struct $name(String);
 
@@ -91,7 +91,9 @@ pub struct Category {
     pub title: Title,
     pub minimum_write_permission: Permission,
     pub minimum_read_permission: Permission,
+    pub deleted: bool,
     pub date_created: String,
+    pub date_edited: String,
 }
 impl_json_writer!(Category);
 
@@ -102,7 +104,10 @@ pub struct Post {
     pub title: Title,
     pub content: Content,
     pub creator_id: Id,
+    pub deleted: bool,
+    pub locked: bool,
     pub date_created: String,
+    pub date_edited: String,
 }
 impl_json_writer!(Post);
 
@@ -112,7 +117,9 @@ pub struct Reply {
     pub creator_id: Id,
     pub post_id: Id,
     pub content: Content,
+    pub deleted: bool,
     pub date_created: String,
+    pub date_edited: String,
 }
 impl_json_writer!(Reply);
 
