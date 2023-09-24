@@ -7,17 +7,14 @@ use salvo::{
 use serde::Deserialize;
 use tokio::sync::RwLockReadGuard;
 
+use crate::{api::response::message_response, db::models::Permission};
+use crate::{api::response::Response, permission_verification};
 use crate::{
-    api::response::Message,
+    api::response::{CreatedResponseResult, Message},
     db::{
         database::{CreateCategory, Database, DatabaseParam},
         models::Id,
     },
-};
-use crate::{api::response::Response, permission_verification};
-use crate::{
-    api::response::{message_response, MessageResponseResult},
-    db::models::Permission,
 };
 
 #[derive(Deserialize, Extractible, ToSchema)]
@@ -73,7 +70,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
 }
 
 #[salvo::endpoint(status_codes(201, 400, 403, 500))]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> CreatedResponseResult {
     let JsonBody(RouteRequest {
         title,
         minimum_permissions:
@@ -99,7 +96,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         let db = db.read().await;
         verify_valid_user_permission(&db, &creator_id, &read_permission, &write_permission).await?;
     }
-    {
+    let id = {
         let mut db = db.write().await;
         db.create_category(CreateCategory {
             title,
@@ -108,8 +105,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))
-        .map_err(|()| message_response::internal_server_error("internal server error"))?;
-    }
+        .map_err(|()| message_response::internal_server_error("internal server error"))?
+    };
 
-    Ok(message_response::created("created"))
+    Ok(message_response::created_with_id("created", id))
 }

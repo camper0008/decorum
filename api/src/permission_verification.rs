@@ -17,6 +17,10 @@ pub fn is_allowed(user_permission: &Permission, required_permission: &Permission
     }
 }
 
+pub fn permission_for_attachment_upload() -> Permission {
+    Permission::User
+}
+
 pub fn permission_for_important_actions() -> Permission {
     Permission::Admin
 }

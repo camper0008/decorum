@@ -9,10 +9,10 @@ use crate::{
 
 use super::{
     database::{
-        CreateCategory, CreatePost, CreateReply, CreateUser, Database, DatabaseError, EditCategory,
-        EditPost, EditReply, EditUser,
+        CreateAttachment, CreateCategory, CreatePost, CreateReply, CreateUser, Database,
+        DatabaseError, EditCategory, EditPost, EditReply, EditUser,
     },
-    models::{Category, Content, Id, Name, Post, Reply, Title, User},
+    models::{Attachment, Category, Content, Id, Name, Post, Reply, Title, User},
 };
 
 pub struct SqliteDb {
@@ -31,7 +31,7 @@ impl SqliteDb {
 
 #[salvo::async_trait]
 impl Database for SqliteDb {
-    async fn create_user(&mut self, data: CreateUser) -> Result<(), DatabaseError> {
+    async fn create_user(&mut self, data: CreateUser) -> Result<Id, DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -50,15 +50,7 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert user")?;
 
-        Ok(())
-    }
-    async fn delete_user_with_id(&mut self, id: &Id) -> Result<(), DatabaseError> {
-        let user = self.user_from_id(id).await?;
-        sqlx::query!("DELETE FROM user WHERE id=?;", id)
-            .execute(&self.pool)
-            .await
-            .with_context(|| format!("unable to delete user with id='{id}'"))?;
-        Ok(())
+        Ok(id)
     }
     async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError> {
         let user = sqlx::query!("SELECT * FROM user WHERE id=?;", id)
@@ -96,7 +88,7 @@ impl Database for SqliteDb {
             date_created: user.date_created,
         }))
     }
-    async fn create_post(&mut self, data: CreatePost) -> Result<(), DatabaseError> {
+    async fn create_post(&mut self, data: CreatePost) -> Result<Id, DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -115,10 +107,10 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert post")?;
 
-        Ok(())
+        Ok(id)
     }
 
-    async fn create_reply(&mut self, data: CreateReply) -> Result<(), DatabaseError> {
+    async fn create_reply(&mut self, data: CreateReply) -> Result<Id, DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -135,10 +127,10 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert reply")?;
 
-        Ok(())
+        Ok(id)
     }
 
-    async fn create_category(&mut self, data: CreateCategory) -> Result<(), DatabaseError> {
+    async fn create_category(&mut self, data: CreateCategory) -> Result<Id, DatabaseError> {
         let id = Id::new();
         let date_created = utc_date_iso_string();
 
@@ -155,7 +147,36 @@ impl Database for SqliteDb {
         .await
         .with_context(|| "unable to insert category")?;
 
-        Ok(())
+        Ok(id)
+    }
+
+    async fn create_attachment<'a>(
+        &mut self,
+        data: CreateAttachment<'a>,
+    ) -> Result<Id, DatabaseError> {
+        let id = Id::new();
+        let date_created = utc_date_iso_string();
+
+        let path = format!(
+            "files_uploaded/{}/{}/{}",
+            data.creator_id, id, data.file_name
+        );
+
+        std::fs::copy(&data.temp_path, &path)
+            .with_context(|| format!("unable to write files to {path}"))?;
+
+        sqlx::query!(
+            "INSERT INTO attachment (id, path, creator_id, date_created) VALUES (?, ?, ?, ?);",
+            id,
+            path,
+            data.creator_id,
+            date_created,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to insert attachment with path {path}")?;
+
+        Ok(id)
     }
 
     async fn edit_user(&mut self, data: EditUser) -> Result<(), DatabaseError> {
@@ -332,12 +353,12 @@ impl Database for SqliteDb {
     }
 
     async fn reply_from_id(&self, id: &Id) -> Result<Option<Reply>, DatabaseError> {
-        let post = sqlx::query!("SELECT * FROM reply WHERE id=?;", id)
+        let reply = sqlx::query!("SELECT * FROM reply WHERE id=?;", id)
             .fetch_optional(&self.pool)
             .await
             .with_context(|| "unable to get reply")?;
 
-        Ok(post.map(|reply| Reply {
+        Ok(reply.map(|reply| Reply {
             id: Id::from_unchecked(reply.id),
             content: Content::from_unchecked(reply.content),
             creator_id: Id::from_unchecked(reply.creator_id),
@@ -345,6 +366,19 @@ impl Database for SqliteDb {
             date_created: reply.date_created,
             date_edited: reply.date_edited,
             deleted: reply.deleted != 0,
+        }))
+    }
+    async fn attachment_from_id(&self, id: &Id) -> Result<Option<Attachment>, DatabaseError> {
+        let attachment = sqlx::query!("SELECT * FROM attachment WHERE id=?;", id)
+            .fetch_optional(&self.pool)
+            .await
+            .with_context(|| "unable to get reply")?;
+
+        Ok(attachment.map(|attachment| Attachment {
+            id: Id::from_unchecked(attachment.id),
+            path: attachment.path,
+            creator_id: Id::from_unchecked(attachment.creator_id),
+            date_created: attachment.date_created,
         }))
     }
 }

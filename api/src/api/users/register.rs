@@ -6,7 +6,7 @@ use salvo::{
 use serde::Deserialize;
 
 use crate::{
-    api::response::{message_response, MessageResponseResult},
+    api::response::{message_response, CreatedResponseResult},
     db::{
         database::{CreateUser, DatabaseParam},
         models::{Name, Permission},
@@ -21,7 +21,7 @@ struct RouteRequest {
 }
 
 #[salvo::endpoint(status_codes(201, 400, 500))]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> CreatedResponseResult {
     let JsonBody(RouteRequest { username, password }) = request;
 
     let username: Name = username.try_into().map_err(message_response::bad_request)?;
@@ -53,7 +53,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
     let password = bcrypt::hash::<String>(password.into(), bcrypt::DEFAULT_COST)
         .map_err(|err| log::error!("unable to hash pw: {err:?}"))
         .map_err(|()| message_response::internal_server_error("internal server error"))?;
-    {
+    let id = {
         let mut db = db.write().await;
 
         let password = password
@@ -69,8 +69,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         })
         .await
         .map_err(|err| log::error!("unable to save user in db: {err:?}"))
-        .map_err(|()| message_response::internal_server_error("error creating post"))?;
-    }
+        .map_err(|()| message_response::internal_server_error("error creating post"))?
+    };
 
-    Ok(message_response::created("user created"))
+    Ok(message_response::created_with_id("user created", id))
 }

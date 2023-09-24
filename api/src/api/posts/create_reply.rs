@@ -7,7 +7,7 @@ use salvo::{
 use serde::Deserialize;
 use tokio::sync::RwLockReadGuard;
 
-use crate::{api::response::MessageResponseResult, db::database::CreateReply};
+use crate::{api::response::CreatedResponseResult, db::database::CreateReply};
 use crate::{api::response::Response, permission_verification};
 use crate::{
     api::response::{message_response, Message},
@@ -77,7 +77,7 @@ async fn verify_valid_user_permission<'a, Db: Database + Sync + Send + ?Sized>(
 }
 
 #[salvo::endpoint(status_codes(201, 400, 403, 500))]
-pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> MessageResponseResult {
+pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> CreatedResponseResult {
     let JsonBody(RouteRequest { post_id, content }) = request;
 
     let post_id =
@@ -98,7 +98,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         let db = db.read().await;
         verify_valid_user_permission(&db, &creator_id, &post_id).await?;
     }
-    {
+    let id = {
         let mut db = db.write().await;
         db.create_reply(CreateReply {
             creator_id,
@@ -107,8 +107,8 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
         })
         .await
         .map_err(|err| log::error!("unable to save post in database: {err:?}"))
-        .map_err(|()| message_response::internal_server_error("internal server error"))?;
-    }
+        .map_err(|()| message_response::internal_server_error("internal server error"))?
+    };
 
-    Ok(message_response::created("created"))
+    Ok(message_response::created_with_id("created", id))
 }

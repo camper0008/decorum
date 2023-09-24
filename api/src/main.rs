@@ -45,6 +45,10 @@ fn read_routes() -> Router {
         .push(
             Router::with_path("/users/user_from_id/<user_id>").get(api::users::user_from_id_route),
         )
+        .push(
+            Router::with_path("/attachments/attachment_from_id/<attachment_id>")
+                .get(api::attachments::attachment_from_id_route),
+        )
 }
 
 fn write_routes() -> Router {
@@ -73,6 +77,10 @@ fn write_routes() -> Router {
         .push(Router::with_path("/posts/remove_category").post(api::posts::remove_category_route))
         .push(Router::with_path("/posts/remove_reply").post(api::posts::remove_reply_route))
         .push(Router::with_path("/posts/edit_post_lock_status").post(api::posts::lock_post_route))
+        .push(
+            Router::with_path("/attachments/create_attachment")
+                .post(api::attachments::create_attachment_route),
+        )
 }
 
 /// TODO: 'wipe' option?

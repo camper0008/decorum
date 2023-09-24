@@ -8,6 +8,7 @@ use crate::password::HashedPassword;
 
 macro_rules! define_newtype {
     ($name: tt, $length_range: expr) => {
+        #[must_use]
         #[derive(Serialize, Deserialize, sqlx::Type, Display, oapi::ToSchema, PartialEq)]
         #[sqlx(transparent)]
         pub struct $name(String);
@@ -133,11 +134,10 @@ pub struct Reply {
 }
 impl_json_writer!(Reply);
 
-#[allow(dead_code)]
 #[derive(Deserialize)]
 pub struct Attachment {
-    id: Id,
-    path: String,
-    creator_id: Id,
-    date_created: String,
+    pub id: Id,
+    pub path: String,
+    pub creator_id: Id,
+    pub date_created: String,
 }

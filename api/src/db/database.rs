@@ -1,11 +1,13 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use salvo::async_trait;
 use tokio::sync::RwLock;
 
 use crate::password::HashedPassword;
 
-use super::models::{Category, Content, Id, Name, Permission, Post, Reply, Title, User};
+use super::models::{
+    Attachment, Category, Content, Id, Name, Permission, Post, Reply, Title, User,
+};
 
 pub type DatabaseError = eyre::Report;
 
@@ -17,6 +19,12 @@ pub struct CreateUser {
     pub password: HashedPassword,
     pub permission: Permission,
     pub avatar_id: Option<Id>,
+}
+
+pub struct CreateAttachment<'a> {
+    pub creator_id: Id,
+    pub file_name: &'a str,
+    pub temp_path: &'a PathBuf,
 }
 
 pub struct CreatePost {
@@ -72,10 +80,14 @@ pub struct EditUser {
 
 #[async_trait]
 pub trait Database {
-    async fn create_user(&mut self, data: CreateUser) -> Result<(), DatabaseError>;
-    async fn create_category(&mut self, data: CreateCategory) -> Result<(), DatabaseError>;
-    async fn create_post(&mut self, data: CreatePost) -> Result<(), DatabaseError>;
-    async fn create_reply(&mut self, data: CreateReply) -> Result<(), DatabaseError>;
+    async fn create_user(&mut self, data: CreateUser) -> Result<Id, DatabaseError>;
+    async fn create_category(&mut self, data: CreateCategory) -> Result<Id, DatabaseError>;
+    async fn create_post(&mut self, data: CreatePost) -> Result<Id, DatabaseError>;
+    async fn create_reply(&mut self, data: CreateReply) -> Result<Id, DatabaseError>;
+    async fn create_attachment<'a>(
+        &mut self,
+        data: CreateAttachment<'a>,
+    ) -> Result<Id, DatabaseError>;
     async fn user_from_id(&self, id: &Id) -> Result<Option<User>, DatabaseError>;
     async fn user_from_username(&self, username: &Name) -> Result<Option<User>, DatabaseError>;
     async fn category_from_id(&self, id: &Id) -> Result<Option<Category>, DatabaseError>;
@@ -84,7 +96,7 @@ pub trait Database {
     async fn posts_from_category(&self, id: &Id) -> Result<Vec<Post>, DatabaseError>;
     async fn replies_from_post(&self, id: &Id) -> Result<Vec<Reply>, DatabaseError>;
     async fn reply_from_id(&self, id: &Id) -> Result<Option<Reply>, DatabaseError>;
-    async fn delete_user_with_id(&mut self, id: &Id) -> Result<(), DatabaseError>;
+    async fn attachment_from_id(&self, id: &Id) -> Result<Option<Attachment>, DatabaseError>;
     async fn edit_user(&mut self, data: EditUser) -> Result<(), DatabaseError>;
     async fn edit_category(&mut self, data: EditCategory) -> Result<(), DatabaseError>;
     async fn edit_post(&mut self, data: EditPost) -> Result<(), DatabaseError>;

@@ -1,3 +1,4 @@
+use crate::db::models::Id;
 use salvo::{
     oapi::{self, Components, Operation},
     prelude::{EndpointOutRegister, StatusCode, ToSchema},
@@ -5,10 +6,13 @@ use salvo::{
 };
 use serde::Serialize;
 
+pub type CreatedResponseResult = Result<Response<CreatedWithIdMessage>, Response<Message>>;
 pub type MessageResponseResult = Result<Response<Message>, Response<Message>>;
 
 pub mod message_response {
-    use super::{Message, Response};
+    use crate::db::models::Id;
+
+    use super::{CreatedWithIdMessage, Message, Response};
 
     macro_rules! impl_message_response {
         ($name: ident, $code: expr, $ok: expr) => {
@@ -29,6 +33,17 @@ pub mod message_response {
     impl_message_response!(bad_request, 400, false);
     impl_message_response!(unauthorized, 403, false);
     impl_message_response!(internal_server_error, 500, false);
+
+    pub fn created_with_id<S: ToString>(message: S, id: Id) -> Response<CreatedWithIdMessage> {
+        Response {
+            code: 201,
+            data: CreatedWithIdMessage {
+                ok: true,
+                message: message.to_string(),
+                data: id,
+            },
+        }
+    }
 }
 
 macro_rules! impl_response_with {
@@ -76,6 +91,13 @@ impl<T: ToSchema> Response<T> {
 pub struct Message {
     ok: bool,
     message: String,
+}
+
+#[derive(Serialize, oapi::ToSchema)]
+pub struct CreatedWithIdMessage {
+    ok: bool,
+    message: String,
+    data: Id,
 }
 
 #[salvo::async_trait]
