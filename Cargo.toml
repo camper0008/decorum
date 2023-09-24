@@ -2,3 +2,4 @@
 members = [
     "api/",
 ]
+resolver = "2"
