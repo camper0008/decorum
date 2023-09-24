@@ -61,6 +61,15 @@ pub struct EditReply {
     pub deleted: bool,
 }
 
+pub struct EditUser {
+    pub id: Id,
+    pub nickname: Option<Name>,
+    pub password: HashedPassword,
+    pub permission: Permission,
+    pub avatar_id: Option<Id>,
+    pub deleted: bool,
+}
+
 #[async_trait]
 pub trait Database {
     async fn create_user(&mut self, data: CreateUser) -> Result<(), DatabaseError>;
@@ -76,6 +85,7 @@ pub trait Database {
     async fn replies_from_post(&self, id: &Id) -> Result<Vec<Reply>, DatabaseError>;
     async fn reply_from_id(&self, id: &Id) -> Result<Option<Reply>, DatabaseError>;
     async fn delete_user_with_id(&mut self, id: &Id) -> Result<(), DatabaseError>;
+    async fn edit_user(&mut self, data: EditUser) -> Result<(), DatabaseError>;
     async fn edit_category(&mut self, data: EditCategory) -> Result<(), DatabaseError>;
     async fn edit_post(&mut self, data: EditPost) -> Result<(), DatabaseError>;
     async fn edit_reply(&mut self, data: EditReply) -> Result<(), DatabaseError>;

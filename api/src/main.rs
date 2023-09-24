@@ -57,6 +57,11 @@ fn write_routes() -> Router {
     Router::with_hoop(limiter)
         .push(Router::with_path("/users/register").post(api::users::register_route))
         .push(Router::with_path("/users/login").post(api::users::login_route))
+        .push(Router::with_path("/users/edit_user").post(api::users::edit_user_route))
+        .push(
+            Router::with_path("/users/edit_user_permission")
+                .post(api::users::edit_user_permission_route),
+        )
         .push(Router::with_path("/posts/create_post").post(api::posts::create_post_route))
         .push(Router::with_path("/posts/create_category").post(api::posts::create_category_route))
         .push(Router::with_path("/posts/create_reply").post(api::posts::create_reply_route))
@@ -70,8 +75,7 @@ fn write_routes() -> Router {
         .push(Router::with_path("/posts/edit_post_lock_status").post(api::posts::lock_post_route))
 }
 
-/// TODO: ban user api + 'wipe' option
-/// TODO: unban user api
+/// TODO: 'wipe' option?
 /// TODO: attachment get
 /// TODO: attachment upload
 

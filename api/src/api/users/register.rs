@@ -64,7 +64,7 @@ pub async fn route(request: JsonBody<RouteRequest>, depot: &mut Depot) -> Messag
             username,
             nickname: None,
             password,
-            permission: Permission::Unverified,
+            permission: Permission::default(),
             avatar_id: None,
         })
         .await

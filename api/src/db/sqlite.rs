@@ -10,7 +10,7 @@ use crate::{
 use super::{
     database::{
         CreateCategory, CreatePost, CreateReply, CreateUser, Database, DatabaseError, EditCategory,
-        EditPost, EditReply,
+        EditPost, EditReply, EditUser,
     },
     models::{Category, Content, Id, Name, Post, Reply, Title, User},
 };
@@ -36,13 +36,14 @@ impl Database for SqliteDb {
         let date_created = utc_date_iso_string();
 
         sqlx::query!(
-            "INSERT INTO user (id, username, nickname, password, permission, avatar_id, date_created) VALUES (?, ?, ?, ?, ?, ?, ?);",
+            "INSERT INTO user (id, username, nickname, password, permission, avatar_id, deleted, date_created) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
             id,
             data.username,
             data.nickname,
             data.password,
             data.permission,
             data.avatar_id,
+            false,
             date_created,
         )
         .execute(&self.pool)
@@ -71,8 +72,10 @@ impl Database for SqliteDb {
             nickname: user.nickname.map(Name::from_unchecked),
             password: HashedPassword::from_unchecked(user.password),
             permission: user.permission.into(),
-            date_created: user.date_created,
             avatar_id: user.avatar_id.map(Id::from_unchecked),
+            deleted: user.deleted != 0,
+            date_created: user.date_created,
+            date_edited: user.date_edited,
         }))
     }
     async fn user_from_username(&self, username: &Name) -> Result<Option<User>, DatabaseError> {
@@ -88,6 +91,8 @@ impl Database for SqliteDb {
             password: HashedPassword::from_unchecked(user.password),
             avatar_id: user.avatar_id.map(Id::from_unchecked),
             permission: user.permission.into(),
+            deleted: user.deleted != 0,
+            date_edited: user.date_edited,
             date_created: user.date_created,
         }))
     }
@@ -96,12 +101,14 @@ impl Database for SqliteDb {
         let date_created = utc_date_iso_string();
 
         sqlx::query!(
-            "INSERT INTO post (id, title, content, category_id, creator_id, date_created) VALUES (?, ?, ?, ?, ?, ?);",
+            "INSERT INTO post (id, title, content, category_id, creator_id, locked, deleted, date_created) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
             id,
             data.title,
             data.content,
             data.category_id,
             data.creator_id,
+            false,
+            false,
             date_created,
         )
         .execute(&self.pool)
@@ -116,11 +123,12 @@ impl Database for SqliteDb {
         let date_created = utc_date_iso_string();
 
         sqlx::query!(
-            "INSERT INTO reply (id, content, creator_id, post_id, date_created) VALUES (?, ?, ?, ?, ?);",
+            "INSERT INTO reply (id, content, creator_id, post_id, deleted, date_created) VALUES (?, ?, ?, ?, ?, ?);",
             id,
             data.content,
             data.creator_id,
             data.post_id,
+            false,
             date_created,
         )
         .execute(&self.pool)
@@ -135,16 +143,36 @@ impl Database for SqliteDb {
         let date_created = utc_date_iso_string();
 
         sqlx::query!(
-            "INSERT INTO category (id, title, minimum_write_permission, minimum_read_permission, date_created) VALUES (?, ?, ?, ?, ?);",
+            "INSERT INTO category (id, title, minimum_write_permission, minimum_read_permission, deleted, date_created) VALUES (?, ?, ?, ?, ?, ?);",
             id,
             data.title,
             data.minimum_write_permission,
             data.minimum_read_permission,
+            false,
             date_created,
         )
         .execute(&self.pool)
         .await
         .with_context(|| "unable to insert category")?;
+
+        Ok(())
+    }
+
+    async fn edit_user(&mut self, data: EditUser) -> Result<(), DatabaseError> {
+        let date_edited = utc_date_iso_string();
+
+        sqlx::query!(
+            "UPDATE user SET nickname=?, password=?, permission=?, avatar_id=?, deleted=? WHERE id=?;",
+            data.nickname,
+            data.password,
+            data.permission,
+            data.avatar_id,
+            data.deleted,
+            data.id,
+        )
+        .execute(&self.pool)
+        .await
+        .with_context(|| "unable to edit category")?;
 
         Ok(())
     }
@@ -174,8 +202,8 @@ impl Database for SqliteDb {
         sqlx::query!(
             "UPDATE post SET title=?, content=?, category_id=?, date_edited=?, deleted=?, locked=? WHERE id=?;",
             data.title,
-            data.category_id,
             data.content,
+            data.category_id,
             date_edited,
             data.deleted,
             data.locked,

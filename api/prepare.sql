@@ -6,6 +6,7 @@ CREATE TABLE user (
     password TEXT NOT NULL,
     permission TEXT NOT NULL,
     avatar_id VARCHAR(36),
+    date_edited TEXT,
     date_created TEXT NOT NULL,
     deleted INTEGER not null,
     FOREIGN KEY(avatar_id) REFERENCES attachment(id)
@@ -29,11 +30,12 @@ CREATE TABLE post (
     content TEXT NOT NULL,
     category_id VARCHAR(36) NOT NULL,
     creator_id VARCHAR(36) NOT NULL,
-    date_edited TEXT,
-    date_created TEXT NOT NULL,
     locked INTEGER not null,
     deleted INTEGER not null,
+    date_created TEXT NOT NULL,
+    date_edited TEXT,
     FOREIGN KEY(creator_id) REFERENCES user(id)
+    FOREIGN KEY(category_id) REFERENCES category(id)
 );
 
 DROP TABLE IF EXISTS reply;

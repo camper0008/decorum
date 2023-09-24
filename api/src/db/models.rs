@@ -50,10 +50,17 @@ macro_rules! impl_json_writer {
 
 #[derive(Serialize, Deserialize, sqlx::Type, Display, ToSchema)]
 pub enum Permission {
+    Banned,
     Unverified,
     User,
     Admin,
     Root,
+}
+
+impl Default for Permission {
+    fn default() -> Self {
+        Permission::Unverified
+    }
 }
 
 impl Id {
@@ -65,6 +72,7 @@ impl Id {
 impl From<String> for Permission {
     fn from(value: String) -> Self {
         match value.as_str() {
+            "Banned" => Permission::Banned,
             "Unverified" => Permission::Unverified,
             "User" => Permission::User,
             "Admin" => Permission::Admin,
@@ -82,7 +90,9 @@ pub struct User {
     pub password: HashedPassword,
     pub permission: Permission,
     pub avatar_id: Option<Id>,
+    pub deleted: bool,
     pub date_created: String,
+    pub date_edited: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, oapi::ToSchema)]
@@ -93,7 +103,7 @@ pub struct Category {
     pub minimum_read_permission: Permission,
     pub deleted: bool,
     pub date_created: String,
-    pub date_edited: String,
+    pub date_edited: Option<String>,
 }
 impl_json_writer!(Category);
 
@@ -107,7 +117,7 @@ pub struct Post {
     pub deleted: bool,
     pub locked: bool,
     pub date_created: String,
-    pub date_edited: String,
+    pub date_edited: Option<String>,
 }
 impl_json_writer!(Post);
 
@@ -119,7 +129,7 @@ pub struct Reply {
     pub content: Content,
     pub deleted: bool,
     pub date_created: String,
-    pub date_edited: String,
+    pub date_edited: Option<String>,
 }
 impl_json_writer!(Reply);
 

@@ -34,9 +34,9 @@ pub async fn route(
             .await
             .map_err(|err| log::error!("unable to get user from id: {err:?}"))
             .map_err(|()| message_response::internal_server_error("internal server error"))?
-            .map_or(Permission::Unverified, |user| user.permission)
+            .map_or(Permission::default(), |user| user.permission)
     } else {
-        Permission::Unverified
+        Permission::default()
     };
     let post = db
         .post_from_id(&post_id)
