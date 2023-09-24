@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE post SET title=?, content=?, category_id=?, date_edited=?, deleted=?, locked=? WHERE id=?;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "db747040b2b2880c43dfa358c02ca2c03d284339f46c12736f3cd1dc68fa7bf4"
+}

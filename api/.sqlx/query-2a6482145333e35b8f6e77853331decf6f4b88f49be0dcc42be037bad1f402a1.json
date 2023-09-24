@@ -34,13 +34,18 @@
         "type_info": "Text"
       },
       {
-        "name": "date_created",
+        "name": "date_edited",
         "ordinal": 6,
         "type_info": "Text"
       },
       {
-        "name": "deleted",
+        "name": "date_created",
         "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted",
+        "ordinal": 8,
         "type_info": "Int64"
       }
     ],
@@ -53,6 +58,7 @@
       true,
       false,
       false,
+      true,
       true,
       false,
       false

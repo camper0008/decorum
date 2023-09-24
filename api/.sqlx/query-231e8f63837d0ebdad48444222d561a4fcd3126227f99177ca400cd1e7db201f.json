@@ -29,24 +29,24 @@
         "type_info": "Text"
       },
       {
-        "name": "date_edited",
-        "ordinal": 5,
-        "type_info": "Text"
-      },
-      {
-        "name": "date_created",
-        "ordinal": 6,
-        "type_info": "Text"
-      },
-      {
         "name": "locked",
-        "ordinal": 7,
+        "ordinal": 5,
         "type_info": "Int64"
       },
       {
         "name": "deleted",
-        "ordinal": 8,
+        "ordinal": 6,
         "type_info": "Int64"
+      },
+      {
+        "name": "date_created",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "date_edited",
+        "ordinal": 8,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -61,7 +61,7 @@
       false,
       false,
       false,
-      false
+      true
     ]
   },
   "hash": "231e8f63837d0ebdad48444222d561a4fcd3126227f99177ca400cd1e7db201f"

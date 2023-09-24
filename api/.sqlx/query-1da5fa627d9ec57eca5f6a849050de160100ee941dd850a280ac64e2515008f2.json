@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE user SET nickname=?, password=?, permission=?, avatar_id=?, deleted=? WHERE id=?;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "1da5fa627d9ec57eca5f6a849050de160100ee941dd850a280ac64e2515008f2"
+}

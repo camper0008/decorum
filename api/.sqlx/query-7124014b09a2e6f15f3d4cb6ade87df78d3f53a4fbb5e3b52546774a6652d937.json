@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM user WHERE username=?;",
+  "query": "SELECT * FROM reply WHERE id=?;",
   "describe": {
     "columns": [
       {
@@ -9,43 +9,33 @@
         "type_info": "Text"
       },
       {
-        "name": "username",
+        "name": "creator_id",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "nickname",
+        "name": "content",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "password",
+        "name": "post_id",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "permission",
+        "name": "date_edited",
         "ordinal": 4,
         "type_info": "Text"
       },
       {
-        "name": "avatar_id",
+        "name": "date_created",
         "ordinal": 5,
         "type_info": "Text"
       },
       {
-        "name": "date_edited",
-        "ordinal": 6,
-        "type_info": "Text"
-      },
-      {
-        "name": "date_created",
-        "ordinal": 7,
-        "type_info": "Text"
-      },
-      {
         "name": "deleted",
-        "ordinal": 8,
+        "ordinal": 6,
         "type_info": "Int64"
       }
     ],
@@ -55,14 +45,12 @@
     "nullable": [
       false,
       false,
-      true,
       false,
       false,
-      true,
       true,
       false,
       false
     ]
   },
-  "hash": "c973c0a7e717c2ff2ce6490654fc6e2cbba31c58dd8ff17c0e73718bda3d832e"
+  "hash": "7124014b09a2e6f15f3d4cb6ade87df78d3f53a4fbb5e3b52546774a6652d937"
 }

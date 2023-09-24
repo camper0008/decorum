@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO category (id, title, minimum_write_permission, minimum_read_permission, deleted, date_created) VALUES (?, ?, ?, ?, ?, ?);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "3d73ae4f6687ad99a899a4460364d2ffd35b5a7f7958c94b4ea9bfa517185874"
+}

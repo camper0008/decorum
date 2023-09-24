@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE reply SET content=?, deleted=?, date_edited=? WHERE id=?;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "4fe9350940ddb6949916e0e2ae02cfc5dbea2ce4709a76ae5d735045a0bba53c"
+}
