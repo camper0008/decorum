@@ -39,6 +39,10 @@ fn read_routes() -> Router {
                 .get(api::posts::posts_from_category_route),
         )
         .push(
+            Router::with_path("/posts/post_from_id/<category_id>/<post_id>")
+                .get(api::posts::post_from_id_route),
+        )
+        .push(
             Router::with_path("/posts/replies_from_post/<post_id>")
                 .get(api::posts::replies_from_post_route),
         )
