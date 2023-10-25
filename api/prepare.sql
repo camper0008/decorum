@@ -1,11 +1,11 @@
 DROP TABLE IF EXISTS user;
 CREATE TABLE user (
-    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    id VARCHAR(16) PRIMARY KEY NOT NULL,
     username TEXT NOT NULL,
     nickname TEXT,
     password TEXT NOT NULL,
     permission TEXT NOT NULL,
-    avatar_id VARCHAR(36),
+    avatar_id VARCHAR(8),
     date_edited TEXT,
     date_created TEXT NOT NULL,
     deleted INTEGER not null,
@@ -14,7 +14,7 @@ CREATE TABLE user (
 
 DROP TABLE IF EXISTS category;
 CREATE TABLE category (
-    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    id VARCHAR(8) PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     minimum_write_permission TEXT NOT NULL,
     minimum_read_permission TEXT NOT NULL,
@@ -25,11 +25,11 @@ CREATE TABLE category (
 
 DROP TABLE IF EXISTS post;
 CREATE TABLE post (
-    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    id VARCHAR(8) PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    category_id VARCHAR(36) NOT NULL,
-    creator_id VARCHAR(36) NOT NULL,
+    category_id VARCHAR(8) NOT NULL,
+    creator_id VARCHAR(8) NOT NULL,
     locked INTEGER not null,
     deleted INTEGER not null,
     date_created TEXT NOT NULL,
@@ -40,10 +40,10 @@ CREATE TABLE post (
 
 DROP TABLE IF EXISTS reply;
 CREATE TABLE reply (
-    id VARCHAR(36) PRIMARY KEY NOT NULL,
-    creator_id VARCHAR(36) NOT NULL,
+    id VARCHAR(8) PRIMARY KEY NOT NULL,
+    creator_id VARCHAR(8) NOT NULL,
     content TEXT NOT NULL,
-    post_id VARCHAR(36) NOT NULL,
+    post_id VARCHAR(8) NOT NULL,
     date_edited TEXT,
     date_created TEXT NOT NULL,
     deleted INTEGER not null,
@@ -54,9 +54,9 @@ CREATE TABLE reply (
 
 DROP TABLE IF EXISTS attachment;
 CREATE TABLE attachment (
-    id VARCHAR(36) PRIMARY KEY NOT NULL,
+    id VARCHAR(8) PRIMARY KEY NOT NULL,
     path TEXT NOT NULL,
-    creator_id VARCHAR(36) NOT NULL,
+    creator_id VARCHAR(8) NOT NULL,
     date_created TEXT NOT NULL,
     FOREIGN KEY(creator_id) REFERENCES user(id)
 );

@@ -33,7 +33,7 @@ macro_rules! define_newtype {
     };
 }
 
-define_newtype!(Id, 36..=36);
+define_newtype!(Id, 8..=8);
 define_newtype!(Content, 24..=1024);
 define_newtype!(Name, 1..=32);
 define_newtype!(Title, 1..=128);
@@ -66,7 +66,7 @@ impl Default for Permission {
 
 impl Id {
     pub fn new() -> Self {
-        Self(Uuid::new_v4().to_string())
+        Self(Uuid::new_v4().to_string()[0..8].to_string())
     }
 }
 
