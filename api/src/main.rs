@@ -50,6 +50,9 @@ fn read_routes() -> Router {
             Router::with_path("/users/user_from_id/<user_id>").get(api::users::user_from_id_route),
         )
         .push(
+            Router::with_path("/users/user_from_session").get(api::users::user_from_session_route),
+        )
+        .push(
             Router::with_path("/attachments/attachment_from_id/<attachment_id>")
                 .get(api::attachments::attachment_from_id_route),
         )
