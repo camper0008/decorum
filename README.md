@@ -7,4 +7,4 @@ setup api:
 
 `$ sqlite3 decorum.db < prepare.sql`
 
-`$ DATABASE_URL=sqlite://decorum.db SESSION_HANDLER_TOKEN=... cargo r`
+`$ BIND_URL=127.0.0.1 DATABASE_URL=sqlite://decorum.db SESSION_HANDLER_TOKEN=... cargo r`

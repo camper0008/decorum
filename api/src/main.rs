@@ -102,6 +102,8 @@ async fn main() -> eyre::Result<()> {
 
     tracing_subscriber::fmt().init();
 
+    let bind_url = std::env::var("BIND_URL").unwrap_or(String::from("127.0.0.1"));
+
     let session_handler_token = std::env::var("SESSION_HANDLER_TOKEN")
         .with_context(|| "env variable `SESSION_HANDLER_TOKEN` should be set")?;
 
@@ -128,7 +130,7 @@ async fn main() -> eyre::Result<()> {
 
     let router = openapi_route(router);
 
-    let acceptor = TcpListener::new("127.0.0.1:5800").bind().await;
+    let acceptor = TcpListener::new(&format!("{bind_url}:5800")).bind().await;
     Server::new(acceptor).serve(router).await;
     Ok(())
 }
