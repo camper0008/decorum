@@ -34,7 +34,7 @@ macro_rules! define_newtype {
 }
 
 define_newtype!(Id, 8..=8);
-define_newtype!(Content, 24..=1024);
+define_newtype!(Content, 1..=1024);
 define_newtype!(Name, 1..=32);
 define_newtype!(Title, 1..=128);
 define_newtype!(Link, 1..);
