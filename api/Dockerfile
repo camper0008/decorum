@@ -11,5 +11,6 @@ FROM alpine:3.17 as runner
 WORKDIR /workspace
 COPY --from=builder /workspace/target/release/decorum-api .
 COPY --from=builder /workspace/decorum.db .
+VOLUME ["/workspace/decorum.db"]
 COPY .env .
 ENTRYPOINT ["/workspace/scraper"]
