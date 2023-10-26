@@ -7,6 +7,7 @@ COPY Cargo.lock Cargo.lock
 COPY prepare.sql prepare.sql
 RUN sqlite3 decorum.db < prepare.sql
 COPY src src
+COPY .sqlx .sqlx
 RUN cargo build --release
 
 FROM alpine:3.17 as runner
