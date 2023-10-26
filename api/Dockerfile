@@ -1,4 +1,6 @@
 FROM rust:1.73-alpine3.17 as builder
+RUN apk update && apk upgrade
+RUN apk add --no-cache sqlite
 WORKDIR /workspace
 COPY Cargo.toml Cargo.toml
 COPY Cargo.lock Cargo.lock
