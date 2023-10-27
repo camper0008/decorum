@@ -12,8 +12,9 @@ RUN cargo build --release
 
 FROM alpine:3.17 as runner
 WORKDIR /workspace
+RUN mkdir /workspace/db -p
+VOLUME ["/workspace/db"]
 COPY --from=builder /workspace/target/release/decorum-api .
-COPY --from=builder /workspace/decorum.db .
-VOLUME ["/workspace/decorum.db"]
+COPY --from=builder /workspace/decorum.db /workspace/db
 COPY .env .
-ENTRYPOINT ["/workspace/scraper"]
+ENTRYPOINT ["/workspace/decorum-api"]
