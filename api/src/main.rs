@@ -102,7 +102,8 @@ async fn main() -> eyre::Result<()> {
 
     tracing_subscriber::fmt().init();
 
-    let bind_url = std::env::var("BIND_URL").unwrap_or(String::from("127.0.0.1"));
+    let bind_url =
+        std::env::var("BIND_URL").with_context(|| "env variable `BIND_URL` should be set")?;
 
     let session_handler_token = std::env::var("SESSION_HANDLER_TOKEN")
         .with_context(|| "env variable `SESSION_HANDLER_TOKEN` should be set")?;

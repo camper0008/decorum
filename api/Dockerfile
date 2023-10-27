@@ -16,5 +16,5 @@ RUN mkdir /workspace/db -p
 VOLUME ["/workspace/db"]
 COPY --from=builder /workspace/target/release/decorum-api .
 COPY --from=builder /workspace/decorum.db /workspace/db
-COPY .env .
+COPY .env /workspace
 ENTRYPOINT ["/workspace/decorum-api"]
