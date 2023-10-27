@@ -21,7 +21,7 @@ pub mod message_response {
                     code: $code,
                     data: Message {
                         ok: $ok,
-                        message: message.to_string(),
+                        data: message.to_string(),
                     },
                 }
             }
@@ -90,7 +90,7 @@ impl<T: ToSchema> Response<T> {
 #[derive(Serialize, oapi::ToSchema)]
 pub struct Message {
     ok: bool,
-    message: String,
+    data: String,
 }
 
 #[derive(Serialize, oapi::ToSchema)]
