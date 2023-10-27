@@ -68,6 +68,7 @@ fn write_routes() -> Router {
     Router::with_hoop(limiter)
         .push(Router::with_path("/users/register").post(api::users::register_route))
         .push(Router::with_path("/users/login").post(api::users::login_route))
+        .push(Router::with_path("/users/logout").post(api::users::logout_route))
         .push(Router::with_path("/users/edit_user").post(api::users::edit_user_route))
         .push(
             Router::with_path("/users/edit_user_permission")
